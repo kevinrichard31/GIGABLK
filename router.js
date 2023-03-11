@@ -35,9 +35,9 @@ app.get("/genesisBlock", async (req, res) => {
     transactions: [{ type: "genesis", value: 25000000 }],
   };
 
-  await blocks.put("0", genesisBlock);
+  await blocks.put(0, genesisBlock);
   await blocks.put("index", 0);
-  let x = await blocks.get("0");
+  let x = await blocks.get(0);
   res.json({ message: x });
 });
 
@@ -79,16 +79,41 @@ app.get("/generateKeyPair", async (req, res) => {
 });
 
 app.get("/blocksToWallets", async (req, res) => {
-  let index = await blocks.get('index')
-  console.log(index)
-  
+  let index = await blocks.get("index");
+  console.log(index);
+
   switch (index) {
     case 0:
+      console.log(index);
+      let block = await blocks.get(0);
+      console.log("block");
+      console.log(block);
+      // let walletIdGenesis = helpers.verifySignature(block.message, block.signature)
+      // console.log(walletIdGenesis)
+      // blocks.get(0, function (err, value) {
+
+      //     let walletIdGenesis = verifySignature(valueParsed)
+      //     let messageParsed = JSON.parse(valueParsed.message)
+      //     console.log("🌱 ~ file: server.js:864 ~ messageParsed:", messageParsed)
+      //     wallets.put(walletIdGenesis, JSON.stringify({
+      //         value: messageParsed.maxSupply,
+      //         lastTransaction: {
+      //             block:valueParsed.blockInfo.blockNumber,
+      //             hash: valueParsed.blockInfo.hash
+      //         }
+      //     }), function (err, value) {
+      //         if (err) return console.log('Ooops!', err) // some kind of I/O error
+      //         wallets.get(walletIdGenesis, function (err, value) {
+      //             if (err) return console.log('Ooops!', err) // some kind of I/O error
+      //             console.log("🌱 ~ file: server.js:873 ~ value", JSON.parse(value))
+      //         })
+      //     })
+      // })
       break;
     default:
       break;
   }
-  
+
   res.json({ message: "BLOCKS TO WALLETS" });
 });
 
