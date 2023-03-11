@@ -36,8 +36,6 @@ const router = express.Router();
 // Créer une route get qui renvoi un message json
 const port = 3000;
 
-
-
 app.get("/", (req, res) => {
   var ip = helpers.splitString(req.socket.remoteAddress, ":"); // '127.0.0.1'
   console.log(ip);
@@ -60,7 +58,7 @@ app.get("/genesisBlock", async (req, res) => {
   genesisBlock.blockInfo.signatureBlock = helpers.signMessage(genesisBlock.blockMessage);
 
   await blocks.put(0, genesisBlock);
-  await blocks.put("blockIndex", 0);
+  await blocks.put("blocksIndex", 0);
   let x = await blocks.get(0);
   res.json(x);
 });
@@ -128,15 +126,15 @@ app.get("/returnBlocks", async (req, res) => { // TWO PARAMETERS MIN AND MAX
 // RETURN INFORMATIONS LIKE BLOCKSINDEX AND WALLETINDEX
 app.get("/nodeInformations", async (req, res) => {
   let informations = {
-    blocksIndex: await blocks.get("blockIndex") ?? null,
-    walletsIndex: await wallets.get("walletIndex") ?? null
+    blocksIndex: await blocks.get("blocksIndex") ?? null,
+    walletsIndex: await wallets.get("walletsIndex") ?? null
   }
   res.json(informations);
 });
 
-
-app.get("/whichBlocksToSync", async (req, res) => {
-  let nodeInformations = await axios.get(localurl + "nodeInformations")
+app.get("/whichWalletsToSync", async (req, res) => {
+  try {
+    let nodeInformations = await axios.get(localurl + "nodeInformations")
     .then(function (response) {
       return response.data;
     })
@@ -144,107 +142,76 @@ app.get("/whichBlocksToSync", async (req, res) => {
       console.log(error);
     })
 
-    let maxIndex = Math.max(nodeInformations.blocksIndex, nodeInformations.walletsIndex);
-    
-
-    
-  let min = null;
-  let max = null;
-  if(min == null){
-    min = 0;
-  } else {
-    min = nodeInformations.blocksIndex + 1;
+  if(nodeInformations.walletsIndex == nodeInformations.blocksIndex){
+    res.json("synced")
   }
-
-
-
-  res.json();
-});
-// SYNC WALLETS FROM BLOCKS
-app.get("/syncMyOwnWallets", async (req, res) => {
-  let nodeInformations = await axios.get(localurl + "nodeInformations")
-    .then(function (response) {
-      return response.data;
-    })
-    .catch(function (error) {
-      console.log(error);
-    })
-  console.log("🌱 - file: router.js:146 - app.get - nodeInformations:", nodeInformations)
 
   let min = 0;
   let max = 0;
 
-  if (nodeInformations.walletsIndex == null) { // IF NULL
-    min = 0;
-    max = min + 9;
-    for (let i = min; i < max + 1; i++) {
-      let block = await blocks.get(i);
-      if(block != undefined) {
-        let blockType = block.blockMessage.transactions[0].type;
-        let blockValue = block.blockMessage.transactions[0].value;
-        let walletIdGenesis = helpers.verifySignature(block.blockMessage, block.blockInfo.signatureBlock)
-        await wallets.put(walletIdGenesis,
-          {
-            value: blockValue,
-            lastTransaction: {
-              block: 0,
-              hash: null
-            }
-          }
-        );
-        console.log(await wallets.get(walletIdGenesis))
-      }
-
-      
-
-    }
-  } else if (nodeInformations.walletsIndex >= 0) { // IF SUP OR EQUAL TO 0
+  if((nodeInformations.blocksIndex - nodeInformations.walletsIndex) > 10 ){
     min = nodeInformations.walletsIndex + 1;
     max = min + 9;
+    console.log("🌱 - file: router.js:153 - app.get - max:", max)
+  } else if((nodeInformations.blocksIndex - nodeInformations.walletsIndex) <= 10 ) {
+    min = nodeInformations.walletsIndex + 1;
+    max = nodeInformations.blocksIndex;
+    if(nodeInformations.walletsIndex == null){
+      min = 0;
+    }
   }
 
-
-
-
-  // switch (blockIndex) {
-  //   case 0:
-  //     let block = await blocks.get(0);
-  //     let blockType = block.blockMessage.transactions[0].type;
-  //     let blockValue = block.blockMessage.transactions[0].value;
-  //     let walletIdGenesis = helpers.verifySignature(block.blockMessage, block.blockInfo.signatureBlock)
-  //     await blocks.put("blockIndex", 0);
-  //     await wallets.put(walletIdGenesis, 
-  //       {
-  //               value: blockValue,
-  //               lastTransaction: {
-  //                   block:0,
-  //                   hash: null
-  //               }
-  //       }
-  //     );
-  //     console.log(await wallets.get(walletIdGenesis))
-  //     break;
-  //   default:
-  //     break;
-  // }
-
-  res.json({ message: "syncMyOwnWallets" });
+  res.json({min: min, max: max});
+  } catch (error) {
+    
+  }
 });
+// SYNC WALLETS FROM BLOCKS
+app.get("/syncMyOwnWallets", async (req, res) => {
+  let whichWalletsToSync = await axios.get(localurl + "whichWalletsToSync")
+    .then(function (response) {
+      return response.data;
+    })
+    .catch(function (error) {
+      console.log(error);
+    })
+  console.log("🌱 - file: router.js:170 - app.get - whichWalletsToSync:", whichWalletsToSync)
+
+    
+  if(whichWalletsToSync == "synced"){
+    res.json("synced");
+    return
+  }
+  let min = whichWalletsToSync.min;
+  let max = whichWalletsToSync.max;
 
 
+  for (let i = min; i < max + 1; i++) {
+    let block = await blocks.get(i);
+    let count = 0;
+    if(block != undefined) {
+      let blockType = block.blockMessage.transactions[0].type;
+      let blockValue = block.blockMessage.transactions[0].value;
+      let walletIdGenesis = helpers.verifySignature(block.blockMessage, block.blockInfo.signatureBlock)
+      await wallets.put(walletIdGenesis,
+        {
+          value: blockValue,
+          lastTransaction: {
+            block: 0,
+            hash: null
+          }
+        }
+      );
+      console.log(await wallets.get(walletIdGenesis))
+    }
+  }
+  await wallets.put("walletsIndex", max);
+  let walletsIndex = await wallets.get("walletsIndex");
+  res.json({ message: "syncMyOwnWallets", walletsIndex: walletsIndex });
+});
 
 app.listen(port, () => {
   console.log(`Example app listening at http://localhost:${port}`);
 });
 
 module.exports = router;
-
-
-
-      // axios.get(localurl + "genesisBlock")
-      //     .then(function (response) {
-      //       console.log(response.data);
-      //     })
-      //     .catch(function (error) {
-      //       console.log(error);
-      //     })
