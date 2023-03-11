@@ -35,8 +35,9 @@ app.get("/genesisBlock", async (req, res) => {
     transactions: [{ type: "genesis", value: 25000000 }],
   };
 
-  await blocks.put("XXX", genesisBlock);
-  let x = await blocks.get("XXX");
+  await blocks.put("0", genesisBlock);
+  await blocks.put("index", 0);
+  let x = await blocks.get("0");
   res.json({ message: x });
 });
 
@@ -75,6 +76,20 @@ app.get("/generateKeyPair", async (req, res) => {
     );
     res.json({ message: "generated" });
   }
+});
+
+app.get("/blocksToWallets", async (req, res) => {
+  let index = await blocks.get('index')
+  console.log(index)
+  
+  switch (index) {
+    case 0:
+      break;
+    default:
+      break;
+  }
+  
+  res.json({ message: "BLOCKS TO WALLETS" });
 });
 
 app.listen(port, () => {
