@@ -1,0 +1,25 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Hello World",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/genesisBlock": {
+      "get": {
+        "summary": "Get the genesis block",
+        "description": "Retrieve the genesis block of the blockchain",
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "The genesis block"
+          }
+        }
+      }
+    }
+  },
+  "components": {},
+  "tags": []
+}

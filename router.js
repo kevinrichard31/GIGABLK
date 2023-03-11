@@ -1,44 +1,68 @@
 // Comment exporter les routes du serveur dans un autre fichier
 const express = require("express");
 const app = express();
+const fs = require("fs");
+const axios = require("axios");
+const localurl = "http://localhost:3000/";
 
+let test = require("./swagger.json");
+
+const swaggerUi = require('swagger-ui-express');
+
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(test));
 // LMDB
 const lmdb = require("lmdb");
 const open = lmdb.open;
 
 // helpers
-const fs = require("fs");
+
 const bs58 = require("bs58");
 let elliptic = require("elliptic");
 let sha3 = require("js-sha3");
 let ec = new elliptic.ec("secp256k1");
 const helpers = require("./helpers.js");
 
+
+
 let blocks = open({
   path: "blocks",
-  // any options go here, we can turn on compression like this:
+  compression: true,
+});
+let wallets = open({
+  path: "wallets",
   compression: true,
 });
 const router = express.Router();
 // Créer une route get qui renvoi un message json
 const port = 3000;
 
+
+
 app.get("/", (req, res) => {
   var ip = helpers.splitString(req.socket.remoteAddress, ":"); // '127.0.0.1'
   console.log(ip);
   res.json({ message: "Hello /" });
 });
+
 app.get("/genesisBlock", async (req, res) => {
   let genesisBlock = {
-    index: 0,
-    timestamp: Date.now(),
-    transactions: [{ type: "genesis", value: 25000000 }],
+    blockMessage: {
+      index: 0,
+      timestamp: Date.now(),
+      transactions: [{ type: "genesis", value: 25000000 }]
+    },
+    blockInfo: {
+      signatureBlock: null,
+      howToVerifyInfo: "To verify block, you need to use helpers.js use blockMessage as message and blockInfo.signatureBlock as signature to verify authenticity"
+    }
   };
 
+  genesisBlock.blockInfo.signatureBlock = helpers.signMessage(genesisBlock.blockMessage);
+
   await blocks.put(0, genesisBlock);
-  await blocks.put("index", 0);
+  await blocks.put("blockIndex", 0);
   let x = await blocks.get(0);
-  res.json({ message: x });
+  res.json(x);
 });
 
 app.get("/generateKeyPair", async (req, res) => {
@@ -78,47 +102,149 @@ app.get("/generateKeyPair", async (req, res) => {
   }
 });
 
-app.get("/blocksToWallets", async (req, res) => {
-  let index = await blocks.get("index");
-  console.log(index);
+app.get("/returnBlocks", async (req, res) => { // TWO PARAMETERS MIN AND MAX
+  let blocksToReturn = []
+  let min = JSON.parse(req.query.min);
+  let max = JSON.parse(req.query.max);
 
-  switch (index) {
-    case 0:
-      console.log(index);
-      let block = await blocks.get(0);
-      console.log("block");
-      console.log(block);
-      // let walletIdGenesis = helpers.verifySignature(block.message, block.signature)
-      // console.log(walletIdGenesis)
-      // blocks.get(0, function (err, value) {
+  if (max - min > 10) {
+    res.json("too much blocks asked");
+  } else {
+    for (let i = min; i < max + 1; i++) {
+      let block = await blocks.get(i);
+      if (block != undefined) {
+        blocksToReturn.push(block);
+      }
+    }
+    if (blocksToReturn.length == 0) {
+      res.json("synced");
+    } else {
+      res.json(blocksToReturn);
+    }
 
-      //     let walletIdGenesis = verifySignature(valueParsed)
-      //     let messageParsed = JSON.parse(valueParsed.message)
-      //     console.log("🌱 ~ file: server.js:864 ~ messageParsed:", messageParsed)
-      //     wallets.put(walletIdGenesis, JSON.stringify({
-      //         value: messageParsed.maxSupply,
-      //         lastTransaction: {
-      //             block:valueParsed.blockInfo.blockNumber,
-      //             hash: valueParsed.blockInfo.hash
-      //         }
-      //     }), function (err, value) {
-      //         if (err) return console.log('Ooops!', err) // some kind of I/O error
-      //         wallets.get(walletIdGenesis, function (err, value) {
-      //             if (err) return console.log('Ooops!', err) // some kind of I/O error
-      //             console.log("🌱 ~ file: server.js:873 ~ value", JSON.parse(value))
-      //         })
-      //     })
-      // })
-      break;
-    default:
-      break;
+  }
+});
+
+// RETURN INFORMATIONS LIKE BLOCKSINDEX AND WALLETINDEX
+app.get("/nodeInformations", async (req, res) => {
+  let informations = {
+    blocksIndex: await blocks.get("blockIndex") ?? null,
+    walletsIndex: await wallets.get("walletIndex") ?? null
+  }
+  res.json(informations);
+});
+
+
+app.get("/whichBlocksToSync", async (req, res) => {
+  let nodeInformations = await axios.get(localurl + "nodeInformations")
+    .then(function (response) {
+      return response.data;
+    })
+    .catch(function (error) {
+      console.log(error);
+    })
+
+    let maxIndex = Math.max(nodeInformations.blocksIndex, nodeInformations.walletsIndex);
+    
+
+    
+  let min = null;
+  let max = null;
+  if(min == null){
+    min = 0;
+  } else {
+    min = nodeInformations.blocksIndex + 1;
   }
 
-  res.json({ message: "BLOCKS TO WALLETS" });
+
+
+  res.json();
 });
+// SYNC WALLETS FROM BLOCKS
+app.get("/syncMyOwnWallets", async (req, res) => {
+  let nodeInformations = await axios.get(localurl + "nodeInformations")
+    .then(function (response) {
+      return response.data;
+    })
+    .catch(function (error) {
+      console.log(error);
+    })
+  console.log("🌱 - file: router.js:146 - app.get - nodeInformations:", nodeInformations)
+
+  let min = 0;
+  let max = 0;
+
+  if (nodeInformations.walletsIndex == null) { // IF NULL
+    min = 0;
+    max = min + 9;
+    for (let i = min; i < max + 1; i++) {
+      let block = await blocks.get(i);
+      if(block != undefined) {
+        let blockType = block.blockMessage.transactions[0].type;
+        let blockValue = block.blockMessage.transactions[0].value;
+        let walletIdGenesis = helpers.verifySignature(block.blockMessage, block.blockInfo.signatureBlock)
+        await wallets.put(walletIdGenesis,
+          {
+            value: blockValue,
+            lastTransaction: {
+              block: 0,
+              hash: null
+            }
+          }
+        );
+        console.log(await wallets.get(walletIdGenesis))
+      }
+
+      
+
+    }
+  } else if (nodeInformations.walletsIndex >= 0) { // IF SUP OR EQUAL TO 0
+    min = nodeInformations.walletsIndex + 1;
+    max = min + 9;
+  }
+
+
+
+
+  // switch (blockIndex) {
+  //   case 0:
+  //     let block = await blocks.get(0);
+  //     let blockType = block.blockMessage.transactions[0].type;
+  //     let blockValue = block.blockMessage.transactions[0].value;
+  //     let walletIdGenesis = helpers.verifySignature(block.blockMessage, block.blockInfo.signatureBlock)
+  //     await blocks.put("blockIndex", 0);
+  //     await wallets.put(walletIdGenesis, 
+  //       {
+  //               value: blockValue,
+  //               lastTransaction: {
+  //                   block:0,
+  //                   hash: null
+  //               }
+  //       }
+  //     );
+  //     console.log(await wallets.get(walletIdGenesis))
+  //     break;
+  //   default:
+  //     break;
+  // }
+
+  res.json({ message: "syncMyOwnWallets" });
+});
+
+
 
 app.listen(port, () => {
   console.log(`Example app listening at http://localhost:${port}`);
 });
 
 module.exports = router;
+
+
+
+      // axios.get(localurl + "genesisBlock")
+      //     .then(function (response) {
+      //       console.log(response.data);
+      //     })
+      //     .catch(function (error) {
+      //       console.log(error);
+      //     })
