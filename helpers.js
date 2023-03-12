@@ -3,6 +3,7 @@ let elliptic = require("elliptic");
 let ec = new elliptic.ec("secp256k1");
 const bs58 = require("bs58");
 const fs = require("fs");
+const axios = require("axios");
 
 function toPrice2(params) {
   return parseFloat(params).toFixed(2);
@@ -15,6 +16,16 @@ function toPrice8(params) {
 function splitString(stringToSplit, separator) {
   var arrayOfStrings = stringToSplit.split(separator); // [ '', '', 'ffff', '127.0.0.1' ]
   return arrayOfStrings[3];
+}
+
+function getMyIp(){
+  return axios.get("http://ip-api.com/json/?fields=61439")
+  .then(function (response) {
+    return response.data.query;
+  })
+  .catch(function (error) {
+    console.log(error);
+  })
 }
 
 function signMessage(message) {
@@ -47,10 +58,16 @@ function verifySignature(messageJSON, signatureFromHelpersSTRING) {
   return addressRecovered;
 }
 
+function getPublicKey(){
+  return fs.readFileSync("GIGATREEpublicKey.pem", 'utf8');
+}
+
 module.exports = {
   toPrice2,
   toPrice8,
   signMessage,
   verifySignature,
   splitString,
+  getMyIp,
+  getPublicKey
 };

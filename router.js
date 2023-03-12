@@ -29,6 +29,10 @@ let wallets = open({
   path: "wallets",
   compression: true,
 });
+let infos = open({
+  path: "infos",
+  compression: true,
+});
 const router = express.Router();
 // Créer une route get qui renvoi un message json
 const port = 3000;
@@ -132,35 +136,38 @@ app.get("/nodeInformations", async (req, res) => {
 app.get("/whichWalletsToSync", async (req, res) => {
   try {
     let nodeInformations = await axios.get(localurl + "nodeInformations")
-    .then(function (response) {
-      return response.data;
-    })
-    .catch(function (error) {
-      console.log(error);
-    })
+      .then(function (response) {
+        let data = response.data;
 
-  if(nodeInformations.walletsIndex == nodeInformations.blocksIndex){
-    res.json("synced")
-  }
-
-  let min = 0;
-  let max = 0;
-
-  if((nodeInformations.blocksIndex - nodeInformations.walletsIndex) > 10 ){
-    min = nodeInformations.walletsIndex + 1;
-    max = min + 9;
-    console.log("🌱 - file: router.js:153 - app.get - max:", max)
-  } else if((nodeInformations.blocksIndex - nodeInformations.walletsIndex) <= 10 ) {
-    min = nodeInformations.walletsIndex + 1;
-    max = nodeInformations.blocksIndex;
-    if(nodeInformations.walletsIndex == null){
-      min = 0;
-    }
-  }
-
-  res.json({min: min, max: max});
-  } catch (error) {
+        if (data.walletsIndex == data.blocksIndex) {
+          res.json("synced")
+          return;
+        }
     
+        let min = 0;
+        let max = 0;
+    
+        if ((data.blocksIndex - data.walletsIndex) > 10) {
+          min = data.walletsIndex + 1;
+          max = min + 9;
+          console.log("🌱 - file: router.js:153 - app.get - max:", max)
+        } else if ((data.blocksIndex - data.walletsIndex) <= 10) {
+          min = data.walletsIndex + 1;
+          max = data.blocksIndex;
+          if (data.walletsIndex == null) {
+            min = 0;
+          }
+        }
+    
+        res.json({ min: min, max: max });
+      })
+      .catch(function (error) {
+        console.log(error);
+      })
+
+
+  } catch (error) {
+
   }
 });
 // SYNC WALLETS FROM BLOCKS
@@ -174,8 +181,8 @@ app.get("/syncMyOwnWallets", async (req, res) => {
     })
   console.log("🌱 - file: router.js:170 - app.get - whichWalletsToSync:", whichWalletsToSync)
 
-    
-  if(whichWalletsToSync == "synced"){
+
+  if (whichWalletsToSync == "synced") {
     res.json("synced");
     return
   }
@@ -186,7 +193,7 @@ app.get("/syncMyOwnWallets", async (req, res) => {
   for (let i = min; i < max + 1; i++) {
     let block = await blocks.get(i);
     let count = 0;
-    if(block != undefined) {
+    if (block != undefined) {
       let blockType = block.blockMessage.transactions[0].type;
       let blockValue = block.blockMessage.transactions[0].value;
       let walletIdGenesis = helpers.verifySignature(block.blockMessage, block.blockInfo.signatureBlock)
@@ -206,6 +213,18 @@ app.get("/syncMyOwnWallets", async (req, res) => {
   let walletsIndex = await wallets.get("walletsIndex");
   res.json({ message: "syncMyOwnWallets", walletsIndex: walletsIndex });
 });
+
+app.get("/becomeStacker", async (req, res) => {
+  let ip = await helpers.getMyIp()
+
+  await infos.put(ip, {
+    stacker: true,
+    publicKey : helpers.getPublicKey()
+  })
+  console.log(infos.get(ip))
+  res.json(ip)
+});
+
 
 app.listen(port, () => {
   console.log(`Example app listening at http://localhost:${port}`);
