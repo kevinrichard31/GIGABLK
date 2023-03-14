@@ -95,7 +95,9 @@ app.get("/helpers/genesisBlock", async (req, res) => {
 app.get("/helpers/nodeInformations", async (req, res) => {
   let informations = {
     blocksIndex: await blocks.get("blocksIndex") ?? null,
-    walletsIndex: await wallets.get("walletsIndex") ?? null
+    walletsIndex: await wallets.get("walletsIndex") ?? null,
+    nodeVersion: await infos.get("nodeVersion") ?? null,
+    gazFee: await infos.get("gazFee") ?? null
   }
   res.json(informations);
 });

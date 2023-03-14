@@ -45,6 +45,7 @@ const port = 3000;
 
 // ************ INITIALISATION FIRST NODE ********** //
 infos.put("gazFee", 0.00010000)
+infos.put("nodeVersion", 1)
 // ************ INITIALISATION FIRST NODE ********** //
 
 
