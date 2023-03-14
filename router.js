@@ -232,21 +232,19 @@ app.post("/becomeStacker", async (req, res) => {
   var ipClient = helpers.splitString(req.socket.remoteAddress, ":"); // '127.0.0.1'
   let ipSelected = (ipClient == undefined) ? '127.0.0.1' : ipClient
   let isExist = await nodesList.get(ipSelected)
-  console.log(isExist)
-  console.log("🌱 - file: router.js:236 - app.post - isExist:", isExist)
-  let keys = await nodesList.getRange()
-  console.log(keys)
-  keys.forEach(element => {
-    console.log(element)
-  });
+  if(isExist == undefined){
+    await nodesList.put(ipSelected, {
+      timestamp: Date.now(),
+      stacker: true,
+      publicKey : walletId
+    })
+    res.json("Node added to nodesList db")
+  } else {
+    res.json("Already exist")
+  }
 
-  await nodesList.put(ipSelected, {
-    timestamp: Date.now(),
-    stacker: true,
-    publicKey : walletId
-  })
 
-  res.json("becomeStacker")
+
 });
 
 app.get("/sendBecomeStacker", async (req, res) => { // childs => /becomeStacker
@@ -259,7 +257,7 @@ app.get("/sendBecomeStacker", async (req, res) => { // childs => /becomeStacker
       },
       info: {
         signature: null,
-        howToVerifyInfo: "To verify block, you need to use helpers.js use blockMessage as message and blockInfo.signatureBlock as signature to verify authenticity"
+        howToVerifyInfo: "To verify message, you need to use helpers.js use message as message and info.signature as signature to verify authenticity"
       }
     };
 
@@ -269,7 +267,8 @@ app.get("/sendBecomeStacker", async (req, res) => { // childs => /becomeStacker
     
     axios.post(localurl + "becomeStacker", prepareData)
     .then(function (response) {
-      res.json("request Sent to /becomeStacker api")
+      console.log("🌱 - file: router.js:267 - response:", response.data)
+      res.json(response.data)
     })
     .catch(function (error) {
       res.json(error)
