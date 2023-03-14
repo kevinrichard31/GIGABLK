@@ -20,7 +20,7 @@ const helpers = require("./helpers.js");
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 // *************** IMPORT ROUTES *************** // 
-app.use(routeHelpers);
+app.use(routeHelpers); // routes/helpers.js
 // *************** END IMPORT ROUTES *************** // 
 let blocks = open({
   path: "blocks",
@@ -54,6 +54,7 @@ app.get("/", (req, res) => {
   res.json({ message: "Hello " + ip });
 });
 
+// DEPENDENCIE OF /sendBecomStacker route
 app.post("/becomeStacker", async (req, res) => {
   let walletId = helpers.verifySignature(req.body.message, req.body.info.signature)
   var ipClient = helpers.splitString(req.socket.remoteAddress, ":"); // '127.0.0.1'
@@ -71,23 +72,22 @@ app.post("/becomeStacker", async (req, res) => {
   }
 });
 
+//
 app.get("/sendBecomeStacker", async (req, res) => { // childs => /becomeStacker
 // pour devenir stacker il faut signer un message avec son wallet et envoyer son ip
 
     let prepareData = {
       message: {
         timestamp: Date.now(),
-        transactions: [{ type: "becomeStacker", value: 100000 }]
+        transactions: [{ type: "becomeStacker" }]
       },
       info: {
         signature: null,
-        howToVerifyInfo: "To verify message, you need to use helpers.js use message as message and info.signature as signature to verify authenticity"
+        howToVerifyInfo: "To verify message, you need to use helpers.js tool verifySignature() use message as message and info.signature as signature to verify authenticity"
       }
     };
 
     prepareData.info.signature = helpers.signMessage(prepareData.message);
-
-
     
     axios.post(localurl + "becomeStacker", prepareData)
     .then(function (response) {
