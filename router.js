@@ -1,6 +1,7 @@
 // Comment exporter les routes du serveur dans un autre fichier
 const express = require("express");
 const app = express();
+const bodyParser = require('body-parser');
 const fs = require("fs");
 const axios = require("axios");
 const localurl = "http://localhost:3000/";
@@ -18,7 +19,8 @@ let elliptic = require("elliptic");
 let sha3 = require("js-sha3");
 let ec = new elliptic.ec("secp256k1");
 const helpers = require("./helpers.js");
-
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.json());
 
 
 let blocks = open({
@@ -33,9 +35,19 @@ let infos = open({
   path: "infos",
   compression: true,
 });
+let nodesList = open({
+  path: "nodesList",
+  compression: true,
+});
 const router = express.Router();
 // Créer une route get qui renvoi un message json
 const port = 3000;
+
+
+// ************ INITIALISATION FIRST NODE ********** //
+infos.put("gazFee", 0.00010000)
+// ************ INITIALISATION FIRST NODE ********** //
+
 
 app.get("/", (req, res) => {
   var ip = helpers.splitString(req.socket.remoteAddress, ":"); // '127.0.0.1'
@@ -58,6 +70,7 @@ app.get("/genesisBlock", async (req, res) => {
 
   genesisBlock.blockInfo.signatureBlock = helpers.signMessage(genesisBlock.blockMessage);
 
+  console.log()
   await blocks.put(0, genesisBlock);
   await blocks.put("blocksIndex", 0);
   let x = await blocks.get(0);
@@ -214,16 +227,57 @@ app.get("/syncMyOwnWallets", async (req, res) => {
   res.json({ message: "syncMyOwnWallets", walletsIndex: walletsIndex });
 });
 
-app.get("/becomeStacker", async (req, res) => {
-  let ip = await helpers.getMyIp()
+app.post("/becomeStacker", async (req, res) => {
+  let walletId = helpers.verifySignature(req.body.message, req.body.info.signature)
+  var ipClient = helpers.splitString(req.socket.remoteAddress, ":"); // '127.0.0.1'
+  let ipSelected = (ipClient == undefined) ? '127.0.0.1' : ipClient
+  let isExist = await nodesList.get(ipSelected)
+  console.log(isExist)
+  console.log("🌱 - file: router.js:236 - app.post - isExist:", isExist)
+  let keys = await nodesList.getRange()
+  console.log(keys)
+  keys.forEach(element => {
+    console.log(element)
+  });
 
-  await infos.put(ip, {
+  await nodesList.put(ipSelected, {
+    timestamp: Date.now(),
     stacker: true,
-    publicKey : helpers.getPublicKey()
+    publicKey : walletId
   })
-  console.log(infos.get(ip))
-  res.json(ip)
+
+  res.json("becomeStacker")
 });
+
+app.get("/sendBecomeStacker", async (req, res) => { // childs => /becomeStacker
+// pour devenir stacker il faut signer un message avec son wallet et envoyer son ip
+
+    let prepareData = {
+      message: {
+        timestamp: Date.now(),
+        transactions: [{ type: "becomeStacker", value: 100000 }]
+      },
+      info: {
+        signature: null,
+        howToVerifyInfo: "To verify block, you need to use helpers.js use blockMessage as message and blockInfo.signatureBlock as signature to verify authenticity"
+      }
+    };
+
+    prepareData.info.signature = helpers.signMessage(prepareData.message);
+
+
+    
+    axios.post(localurl + "becomeStacker", prepareData)
+    .then(function (response) {
+      res.json("request Sent to /becomeStacker api")
+    })
+    .catch(function (error) {
+      res.json(error)
+    })
+
+
+});
+
 
 
 app.listen(port, () => {

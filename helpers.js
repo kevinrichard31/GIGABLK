@@ -62,6 +62,15 @@ function getPublicKey(){
   return fs.readFileSync("GIGATREEpublicKey.pem", 'utf8');
 }
 
+function ipSizeAcceptable(val){
+
+  if(val != undefined){
+    return true
+  } else {
+    return false
+  }
+}
+
 module.exports = {
   toPrice2,
   toPrice8,
@@ -69,5 +78,6 @@ module.exports = {
   verifySignature,
   splitString,
   getMyIp,
-  getPublicKey
+  getPublicKey,
+  ipSizeAcceptable
 };
