@@ -60,8 +60,8 @@ app.post("/becomeStacker", async (req, res) => {
   let walletId = helpers.verifySignature(req.body.message, req.body.info.signature)
   var ipClient = helpers.splitString(req.socket.remoteAddress, ":"); // '127.0.0.1'
   let ipSelected = (ipClient == undefined) ? '127.0.0.1' : ipClient
-  let isExist = await nodesList.get(ipSelected)
-  if(isExist == undefined){
+  let ipExist = await nodesList.get(ipSelected)
+  if(ipExist == undefined){
     await nodesList.put(ipSelected, {
       timestamp: Date.now(),
       stacker: true,
