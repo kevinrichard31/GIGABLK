@@ -188,6 +188,7 @@ app.get("/syncMyOwnWallets", async (req, res) => {
     let block = await blocks.get(i);
     let count = 0;
     if (block != undefined) {
+      // ADD FOR LOOP FOR EACH TRANSACTIONS A FAIRE
       let blockType = block.blockMessage.transactions[0].type;
       let blockValue = block.blockMessage.transactions[0].value;
       let walletIdGenesis = helpers.verifySignature(block.blockMessage, block.blockInfo.signatureBlock)

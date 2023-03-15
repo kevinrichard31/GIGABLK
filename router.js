@@ -69,7 +69,7 @@ app.post("/becomeStacker", async (req, res) => {
     })
     res.json("Node added to nodesList db")
   } else {
-    res.json("Already exist")
+    res.json("Already in nodesList")
   }
 });
 
@@ -80,7 +80,7 @@ app.get("/sendBecomeStacker", async (req, res) => { // childs => /becomeStacker
     let prepareData = {
       message: {
         timestamp: Date.now(),
-        transactions: [{ type: "becomeStacker" }]
+        type: "becomeStacker"
       },
       info: {
         signature: null,
@@ -98,10 +98,41 @@ app.get("/sendBecomeStacker", async (req, res) => { // childs => /becomeStacker
     .catch(function (error) {
       res.json(error)
     })
-
-
 });
 
+// DEPENDENCIE OF SENDTRANSACTION
+app.post("/transaction", async (req, res) => { // childs => /becomeStacker
+  let walletId = helpers.verifySignature(req.body.message, req.body.info.signature)
+  let amountToSend = req.body.message.value
+  let wallet = await wallets.get(walletId)
+  console.log("🌱 - file: router.js:108 - app.post - wallet:", wallet)
+  res.json(walletId)
+});
+
+app.get("/sendTransaction", async (req, res) => { // childs => /becomeStacker
+  let valueToSend = JSON.parse(req.query.value)
+  let prepareData = {
+    message: {
+      timestamp: Date.now(),
+      type: "transaction",
+      value: valueToSend // PARAM IN URL
+    },
+    info: {
+      signature: null,
+      howToVerifyInfo: "To verify message, you need to use helpers.js tool verifySignature() use message as message and info.signature as signature to verify authenticity"
+    }
+  };
+
+  prepareData.info.signature = helpers.signMessage(prepareData.message);
+
+  axios.post(localurl + "transaction", prepareData)
+  .then(function (response) {
+    res.json(response.data)
+  })
+  .catch(function (error) {
+    res.json(error)
+  })
+});
 
 
 app.listen(port, () => {
