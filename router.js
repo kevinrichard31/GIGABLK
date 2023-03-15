@@ -1,3 +1,4 @@
+// DECLARATION
 const express = require("express");
 const app = express();
 const bodyParser = require('body-parser');
@@ -5,22 +6,23 @@ const fs = require("fs");
 const axios = require("axios");
 const localurl = "http://localhost:3000/";
 const routeHelpers = require("./routes/helpers.js");
+const bs58 = require("bs58");
+let elliptic = require("elliptic");
+let sha3 = require("js-sha3");
+let ec = new elliptic.ec("secp256k1");
 
 // LMDB
 const lmdb = require("lmdb");
 const open = lmdb.open;
 
-// helpers
-const bs58 = require("bs58");
-let elliptic = require("elliptic");
-let sha3 = require("js-sha3");
-let ec = new elliptic.ec("secp256k1");
+// HELPERS
 const helpers = require("./helpers.js");
+
+// *************** ROUTES *************** // 
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
-// *************** IMPORT ROUTES *************** // 
 app.use(routeHelpers); // routes/helpers.js
-// *************** END IMPORT ROUTES *************** // 
+
 let blocks = open({
   path: "blocks",
   compression: true,
