@@ -107,7 +107,7 @@ app.post("/transaction", async (req, res) => { // childs => /becomeStacker
   let amountToSend = req.body.message.value
   let wallet = await wallets.get(walletId)
   console.log("🌱 - file: router.js:108 - app.post - wallet:", wallet)
-  res.json(walletId)
+  res.json("Transaction sent to network, verify in block explorer if validated")
 });
 
 // SENDTRANSACTION TO NODE - PASS PARAM $VALUE
