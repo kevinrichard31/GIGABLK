@@ -110,7 +110,8 @@ app.post("/transaction", async (req, res) => { // childs => /becomeStacker
   res.json(walletId)
 });
 
-app.get("/sendTransaction", async (req, res) => { // childs => /becomeStacker
+// SENDTRANSACTION TO NODE - PASS PARAM $VALUE
+app.get("/sendTransaction", async (req, res) => { // childs => /becomeStacker > 
   let valueToSend = JSON.parse(req.query.value)
   let prepareData = {
     message: {
@@ -138,6 +139,7 @@ app.get("/sendTransaction", async (req, res) => { // childs => /becomeStacker
 
 app.listen(port, () => {
   console.log(`Example app listening at http://localhost:${port}`);
+  console.log(`Example app listening at http://localhost:${port}/sendTransaction`);
 });
 
 module.exports = router;
