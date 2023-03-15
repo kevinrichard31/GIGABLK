@@ -106,6 +106,13 @@ app.post("/transaction", async (req, res) => { // childs => /becomeStacker
   let walletId = helpers.verifySignature(req.body.message, req.body.info.signature)
   let amountToSend = req.body.message.value
   let wallet = await wallets.get(walletId)
+  let gazFee = await infos.get("gazFee")
+  let amountToSendPlusGazFee = amountToSend + gazFee
+  console.log("🌱 - file: router.js:111 - app.post - amountToSendPlusGazFee:", amountToSendPlusGazFee)
+  if(wallet.value >= amountToSendPlusGazFee){
+    console.log('ok on peut faire la transaction')
+  }
+  console.log("🌱 - file: router.js:110 - app.post - gazFee:", gazFee)
   console.log("🌱 - file: router.js:108 - app.post - wallet:", wallet)
   res.json("Transaction sent to network, verify in block explorer if validated")
 });
