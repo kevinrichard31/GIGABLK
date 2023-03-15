@@ -1,4 +1,3 @@
-// Comment exporter les routes du serveur dans un autre fichier
 const express = require("express");
 const app = express();
 const bodyParser = require('body-parser');
