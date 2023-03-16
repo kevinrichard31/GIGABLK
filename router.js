@@ -45,7 +45,7 @@ const port = 3000;
 
 
 // ************ INITIALISATION FIRST NODE ********** //
-infos.put("gazFee", 0.00010000)
+infos.put("gazFee", 0.25)
 infos.put("nodeVersion", 1)
 // ************ INITIALISATION FIRST NODE ********** //
 
@@ -106,47 +106,57 @@ app.post("/transaction", async (req, res) => { // childs => /becomeStacker
   let walletId = helpers.verifySignature(req.body.message, req.body.info.signature)
   let amountToSend = req.body.message.value
   let wallet = await wallets.get(walletId)
-  let gazFee = await infos.get("gazFee")
-  let amountToSendPlusGazFee = amountToSend + gazFee
+
+  let amountToSendPlusGazFee = await helpers.gazFeeCalculator(amountToSend)
   console.log("🌱 - file: router.js:111 - app.post - amountToSendPlusGazFee:", amountToSendPlusGazFee)
   if(wallet.value >= amountToSendPlusGazFee){
     console.log('ok on peut faire la transaction')
   }
-  console.log("🌱 - file: router.js:110 - app.post - gazFee:", gazFee)
-  console.log("🌱 - file: router.js:108 - app.post - wallet:", wallet)
-  res.json("Transaction sent to network, verify in block explorer if validated")
+  res.json("Transaction sent to network, will be added to next block")
 });
 
 // SENDTRANSACTION TO NODE - PASS PARAM $VALUE
 app.get("/sendTransaction", async (req, res) => { // childs => /becomeStacker > 
-  let valueToSend = JSON.parse(req.query.value)
-  let prepareData = {
-    message: {
-      timestamp: Date.now(),
-      type: "transaction",
-      value: valueToSend // PARAM IN URL
-    },
-    info: {
-      signature: null,
-      howToVerifyInfo: "To verify message, you need to use helpers.js tool verifySignature() use message as message and info.signature as signature to verify authenticity"
+  try {
+    if (!req.query.value) {
+      return res.status(400).json("Value is missing");
     }
-  };
+    let valueRegex = /^\d+(\.\d{1,8})?$/;
+    if (!valueRegex.test(req.query.value)) {
+      return res.status(400).json("Value is not a number with 8 decimal places max");
+    }
+    let valueToSend = JSON.parse(req.query.value)
+    let prepareData = {
+      message: {
+        timestamp: Date.now(),
+        type: "transaction",
+        value: valueToSend // PARAM IN URL
+      },
+      info: {
+        signature: null,
+        howToVerifyInfo: "To verify message, you need to use helpers.js tool verifySignature() use message as message and info.signature as signature to verify authenticity"
+      }
+    };
+  
+    prepareData.info.signature = helpers.signMessage(prepareData.message);
+  
+    axios.post(localurl + "transaction", prepareData)
+    .then(function (response) {
+      res.json(response.data)
+    })
+    .catch(function (error) {
+      res.json(error)
+    })
+  } catch (error) {
+    res.json("Erreur lors de la transaction")
+  }
 
-  prepareData.info.signature = helpers.signMessage(prepareData.message);
 
-  axios.post(localurl + "transaction", prepareData)
-  .then(function (response) {
-    res.json(response.data)
-  })
-  .catch(function (error) {
-    res.json(error)
-  })
 });
 
 
 app.listen(port, () => {
   console.log(`Example app listening at http://localhost:${port}`);
-  console.log(`Example app listening at http://localhost:${port}/sendTransaction`);
 });
 
 module.exports = router;

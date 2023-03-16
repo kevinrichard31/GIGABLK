@@ -4,6 +4,27 @@ let ec = new elliptic.ec("secp256k1");
 const bs58 = require("bs58");
 const fs = require("fs");
 const axios = require("axios");
+// LMDB
+const lmdb = require("lmdb");
+const open = lmdb.open;
+
+let blocks = open({
+  path: "blocks",
+  compression: true,
+});
+let wallets = open({
+  path: "wallets",
+  compression: true,
+});
+let infos = open({
+  path: "infos",
+  compression: true,
+});
+let nodesList = open({
+  path: "nodesList",
+  compression: true,
+});
+
 
 function toPrice2(params) {
   return parseFloat(params).toFixed(2);
@@ -65,10 +86,17 @@ function getPublicKey(){
 function ipSizeAcceptable(val){
 
   if(val != undefined){
-    return true
+    return true;
   } else {
-    return false
+    return false;
   }
+}
+
+async function gazFeeCalculator(amountToSend){
+  console.log("🌱 - file: helpers.js:96 - gazFeeCalculator - amountToSend:", amountToSend)
+  let gazFeePercent = await infos.get("gazFee");
+  let amountToSendPlusGazFee = amountToSend + (amountToSend*gazFeePercent/100);
+  return amountToSendPlusGazFee;
 }
 
 module.exports = {
@@ -79,5 +107,6 @@ module.exports = {
   splitString,
   getMyIp,
   getPublicKey,
-  ipSizeAcceptable
+  ipSizeAcceptable,
+  gazFeeCalculator
 };
