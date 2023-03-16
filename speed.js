@@ -16,3 +16,8 @@ async function testx() {
 }
 
 testx()
+
+
+let sha3 = require("js-sha3");
+
+console.log(sha3.sha3_256("bonjour"))

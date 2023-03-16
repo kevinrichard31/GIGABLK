@@ -55,7 +55,7 @@ app.get("/helpers/genesisBlock", async (req, res) => {
     blockMessage: {
       index: 0,
       timestamp: Date.now(),
-      transactions: [{ type: "genesis", value: 25000000 }]
+      transactions: [{ type: "generateToken", tokenName: "GIGATREE", value: 25000000, walletId: "cZ4TJ4frv8hdT6a4et4n4oYoePgmABWhj7YTh2wJ926Z", createdOn: Date.now()}]
     },
     blockInfo: {
       signatureBlock: null,
@@ -65,11 +65,16 @@ app.get("/helpers/genesisBlock", async (req, res) => {
 
   genesisBlock.blockInfo.signatureBlock = helpers.signMessage(genesisBlock.blockMessage);
 
-  console.log()
   await blocks.put(0, genesisBlock);
   await blocks.put("blocksIndex", 0);
   let x = await blocks.get(0);
   res.json(x);
+});
+
+app.get("/helpers/checkMyWallet", async (req, res) => {
+  let wallet = await wallets.get(fs.readFileSync("GIGATREEpublicKey.pem").toString("utf8"))
+  console.log("🌱 - file: helpers.js:76 - app.get - wallet:", wallet)
+  res.json(wallet);
 });
 
 // RETURN INFORMATIONS LIKE BLOCKSINDEX AND WALLETINDEX
@@ -165,26 +170,46 @@ app.get("/syncMyOwnWallets", async (req, res) => {
   let max = whichWalletsToSync.max;
 
 
-  for (let i = min; i < max + 1; i++) {
+  for (let i = min; i < max + 1; i++) { // PREMIERE BOUCLE SYNCHRONISATION DE CHAQUE BLOCKS
     let block = await blocks.get(i);
-    let count = 0;
-    if (block != undefined) {
-      // ADD FOR LOOP FOR EACH TRANSACTIONS A FAIRE
-      let blockType = block.blockMessage.transactions[0].type;
-      let blockValue = block.blockMessage.transactions[0].value;
-      let walletIdGenesis = helpers.verifySignature(block.blockMessage, block.blockInfo.signatureBlock)
-      await wallets.put(walletIdGenesis,
-        {
-          value: blockValue,
-          lastTransaction: {
-            block: 0,
-            hash: null
-          }
+    if (block != undefined) { // BLOCKS NON VIDE DONC...
+      let transactions = block.blockMessage.transactions
+
+      for (let j = 0; j < transactions.length; j++) { // DEUXIEME BOUCLE SYNCHRONISATION DE CHAQUES TRANSACTIONS
+        let transaction = transactions[j]
+        console.log("🌱 - file: helpers.js:174 - app.get - transaction:", transaction)
+
+        switch (transaction.type) {
+          case "generateToken":
+            let walletIdisExist = await wallets.get(transaction.walletId)
+            console.log("🌱 - file: helpers.js:179 - app.get - walletId:", walletIdisExist)
+            if(walletIdisExist == undefined) {
+              await wallets.put(transaction.walletId,
+                {
+                  tokens: {
+                    [transaction.tokenName] : transaction.value
+                  },
+                  creationDate : Date.now(),
+                  lastTransaction: {
+                    block: null,
+                    hash: null
+                  }
+                }
+              );
+            }
+            break;
+          default:
+            break;
         }
-      );
-      console.log(await wallets.get(walletIdGenesis))
+        
+
+      }
     }
+
   }
+
+
+
   await wallets.put("walletsIndex", max);
   let walletsIndex = await wallets.get("walletsIndex");
   res.json({ message: "syncMyOwnWallets", walletsIndex: walletsIndex });

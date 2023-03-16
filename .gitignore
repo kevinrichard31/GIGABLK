@@ -1,5 +1,2 @@
-blocks/**
-wallets/**
-infos/**
-nodesList/**
 node_modules/**
+db/**

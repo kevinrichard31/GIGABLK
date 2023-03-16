@@ -3,19 +3,19 @@ const lmdb = require("lmdb");
 const open = lmdb.open;
 
 let blocks = open({
-  path: "blocks",
+  path: "./db/blocks",
   compression: true,
 });
 let wallets = open({
-  path: "wallets",
+  path: "./db/wallets",
   compression: true,
 });
 let infos = open({
-  path: "infos",
+  path: "./db/infos",
   compression: true,
 });
 let nodesList = open({
-  path: "nodesList",
+  path: "./db/nodesList",
   compression: true,
 });
 
