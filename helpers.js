@@ -92,8 +92,7 @@ function ipSizeAcceptable(val){
   }
 }
 
-async function gazFeeCalculator(amountToSend){
-  console.log("🌱 - file: helpers.js:96 - gazFeeCalculator - amountToSend:", amountToSend)
+async function amountToSendPlusGazFeeCalculator(amountToSend){
   let gazFeePercent = await infos.get("gazFee");
   let amountToSendPlusGazFee = amountToSend + (amountToSend*gazFeePercent/100);
   return amountToSendPlusGazFee;
@@ -108,5 +107,5 @@ module.exports = {
   getMyIp,
   getPublicKey,
   ipSizeAcceptable,
-  gazFeeCalculator
+  amountToSendPlusGazFeeCalculator
 };

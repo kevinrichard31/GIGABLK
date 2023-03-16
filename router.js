@@ -107,12 +107,14 @@ app.post("/transaction", async (req, res) => { // childs => /becomeStacker
   let amountToSend = req.body.message.value
   let wallet = await wallets.get(walletId)
 
-  let amountToSendPlusGazFee = await helpers.gazFeeCalculator(amountToSend)
+  let amountToSendPlusGazFee = await helpers.amountToSendPlusGazFeeCalculator(amountToSend)
   console.log("🌱 - file: router.js:111 - app.post - amountToSendPlusGazFee:", amountToSendPlusGazFee)
   if(wallet.value >= amountToSendPlusGazFee){
-    console.log('ok on peut faire la transaction')
+    // Ajouter la transaction à pool de transaction
+    res.json(amountToSendPlusGazFee)
+  } else {
+    res.json("not enough to spend")
   }
-  res.json("Transaction sent to network, will be added to next block")
 });
 
 // SENDTRANSACTION TO NODE - PASS PARAM $VALUE
