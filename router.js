@@ -12,8 +12,7 @@ let sha3 = require("js-sha3");
 let ec = new elliptic.ec("secp256k1");
 
 // LMDB
-const lmdb = require("lmdb");
-const open = lmdb.open;
+const { blocks, wallets, infos, nodesList } = require('./lmdbSetup.js');
 
 // HELPERS
 const helpers = require("./helpers.js");
@@ -23,22 +22,7 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 app.use(routeHelpers); // routes/helpers.js
 
-let blocks = open({
-  path: "blocks",
-  compression: true,
-});
-let wallets = open({
-  path: "wallets",
-  compression: true,
-});
-let infos = open({
-  path: "infos",
-  compression: true,
-});
-let nodesList = open({
-  path: "nodesList",
-  compression: true,
-});
+
 const router = express.Router();
 // Créer une route get qui renvoi un message json
 const port = 3000;

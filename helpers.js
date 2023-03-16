@@ -5,26 +5,7 @@ const bs58 = require("bs58");
 const fs = require("fs");
 const axios = require("axios");
 // LMDB
-const lmdb = require("lmdb");
-const open = lmdb.open;
-
-let blocks = open({
-  path: "blocks",
-  compression: true,
-});
-let wallets = open({
-  path: "wallets",
-  compression: true,
-});
-let infos = open({
-  path: "infos",
-  compression: true,
-});
-let nodesList = open({
-  path: "nodesList",
-  compression: true,
-});
-
+const { blocks, wallets, infos, nodesList } = require('./lmdbSetup.js');
 
 function toPrice2(params) {
   return parseFloat(params).toFixed(2);
