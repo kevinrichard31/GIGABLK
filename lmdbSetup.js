@@ -2,14 +2,6 @@
 const lmdb = require("lmdb");
 const open = lmdb.open;
 
-// HELPERS
-const helpers = require("./helpers.js");
-
-// *************** ROUTES *************** // 
-app.use(bodyParser.urlencoded({ extended: false }));
-app.use(bodyParser.json());
-app.use(routeHelpers); // routes/helpers.js
-
 let blocks = open({
   path: "blocks",
   compression: true,

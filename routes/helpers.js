@@ -9,26 +9,7 @@ const axios = require("axios");
 const localurl = "http://localhost:3000/";
 
 // LMDB
-const lmdb = require("lmdb");
-const open = lmdb.open;
-
-let blocks = open({
-  path: "blocks",
-  compression: true,
-});
-let wallets = open({
-  path: "wallets",
-  compression: true,
-});
-let infos = open({
-  path: "infos",
-  compression: true,
-});
-let nodesList = open({
-  path: "nodesList",
-  compression: true,
-});
-
+const { blocks, wallets, infos, nodesList } = require('../lmdbSetup.js');
 // GENERATE KEY PAIRS
 app.get("/helpers/generateKeyPair", async (req, res) => {
   if (fs.existsSync("GIGATREEprivateKey.pem" || "GIGATREEpublicKey.pem")) {
