@@ -126,11 +126,13 @@ app.get("/sendTransaction", async (req, res) => { // childs => /becomeStacker >
           if(isNaN(sendTokenValue)){
             return false
           }
+          if(req.query.toPublicKey == undefined || req.query.tokenName == undefined){
+            return false
+          }
           prepareData.message.type = req.query.type
           prepareData.message.value = sendTokenValue
           prepareData.message.toPublicKey = req.query.toPublicKey
           prepareData.message.tokenName = req.query.tokenName
-
           break;
         default:
 
