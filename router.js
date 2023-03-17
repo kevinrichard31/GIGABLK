@@ -92,8 +92,8 @@ app.post("/transaction", async (req, res) => { // childs => /becomeStacker
   let wallet = await wallets.get(walletId)
 
   let amountToSendPlusGazFee = await helpers.amountToSendPlusGazFeeCalculator(amountToSend)
-  console.log("🌱 - file: router.js:111 - app.post - amountToSendPlusGazFee:", amountToSendPlusGazFee)
-  if(wallet.value >= amountToSendPlusGazFee){
+
+  if(wallet.tokens[req.body.message.tokenName] >= amountToSendPlusGazFee){
     // Ajouter la transaction à pool de transaction
     res.json(amountToSendPlusGazFee)
   } else {
@@ -102,37 +102,61 @@ app.post("/transaction", async (req, res) => { // childs => /becomeStacker
 });
 
 // SENDTRANSACTION TO NODE - PASS PARAM $VALUE
+// GENERATE TOKEN , CAN'T CREATE TOKEN IF YOU ALREADY HAVE TOKENS IN YOUR WALLETS
 app.get("/sendTransaction", async (req, res) => { // childs => /becomeStacker > 
   try {
-    if (!req.query.value) {
+    if (!req.query.type) {
       return res.status(400).json("Value is missing");
     }
-    let valueRegex = /^\d+(\.\d{1,8})?$/;
-    if (!valueRegex.test(req.query.value)) {
-      return res.status(400).json("Value is not a number with 8 decimal places max");
-    }
-    let valueToSend = JSON.parse(req.query.value)
+
     let prepareData = {
       message: {
-        timestamp: Date.now(),
-        type: "transaction",
-        value: valueToSend // PARAM IN URL
+        timestamp: Date.now()
       },
       info: {
         signature: null,
         howToVerifyInfo: "To verify message, you need to use helpers.js tool verifySignature() use message as message and info.signature as signature to verify authenticity"
       }
     };
-  
-    prepareData.info.signature = helpers.signMessage(prepareData.message);
-  
-    axios.post(localurl + "transaction", prepareData)
-    .then(function (response) {
-      res.json(response.data)
+    
+    async function executeSwitch(){
+      switch (req.query.type) {
+        case "sendToken":
+          let sendTokenValue = parseFloat(req.query.value) 
+          if(isNaN(sendTokenValue)){
+            return false
+          }
+          prepareData.message.type = req.query.type
+          prepareData.message.value = sendTokenValue
+          prepareData.message.toPublicKey = req.query.toPublicKey
+          prepareData.message.tokenName = req.query.tokenName
+
+          break;
+        default:
+
+          break;
+      }
+    }
+    executeSwitch().then((data)=>{
+      if(data == false){
+        res.json('Verify your parameters')
+        return
+      }
+      prepareData.info.signature = helpers.signMessage(prepareData.message);
+      console.log(prepareData)
+      axios.post(localurl + "transaction", prepareData)
+      .then(function (response) {
+        res.json(response.data)
+      })
+      .catch(function (error) {
+        res.json(error)
+      })
     })
-    .catch(function (error) {
-      res.json(error)
-    })
+
+
+
+  
+
   } catch (error) {
     res.json("Erreur lors de la transaction")
   }

@@ -10,7 +10,7 @@ async function boucles() {
   
   boucles();
 
-  { type: "sendToken", value: 100, fromPubK: "", toPubK: "", tokenName:"" }
+  { type: "sendToken", value: 100, toPubK: "", tokenName:"" }
 
 
   // old  syncMyOwnWallets
