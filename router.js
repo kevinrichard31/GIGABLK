@@ -5,7 +5,7 @@ const bodyParser = require('body-parser');
 const fs = require("fs");
 const axios = require("axios");
 const localurl = "http://localhost:3000/";
-const routeHelpers = require("./routes/helpers.js");
+const routeHelpers = require("./routes/informations.js");
 const bs58 = require("bs58");
 let elliptic = require("elliptic");
 let sha3 = require("js-sha3");
@@ -92,13 +92,17 @@ app.post("/transaction", async (req, res) => { // childs => /becomeStacker
   let wallet = await wallets.get(walletId)
 
   let amountToSendPlusGazFee = await helpers.amountToSendPlusGazFeeCalculator(amountToSend)
-
-  if(wallet.tokens[req.body.message.tokenName] >= amountToSendPlusGazFee){
-    // Ajouter la transaction à pool de transaction
-    res.json(amountToSendPlusGazFee)
+  if(wallet){
+    if(wallet.tokens[req.body.message.tokenName] >= amountToSendPlusGazFee){
+      // Ajouter la transaction à pool de transaction
+      res.json(amountToSendPlusGazFee)
+    } else {
+      res.json("not enough to spend")
+    }
   } else {
-    res.json("not enough to spend")
+    res.json("no wallet")
   }
+
 });
 
 // SENDTRANSACTION TO NODE - PASS PARAM $VALUE
