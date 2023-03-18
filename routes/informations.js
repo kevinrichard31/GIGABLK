@@ -55,7 +55,7 @@ app.get("/helpers/genesisBlock", async (req, res) => {
     blockMessage: {
       index: 0,
       timestamp: Date.now(),
-      transactions: [{ type: "generateToken", tokenName: "GIGATREE", value: 25000000, walletId: "cZ4TJ4frv8hdT6a4et4n4oYoePgmABWhj7YTh2wJ926Z", createdOn: Date.now()}]
+      transactions: [{ message : {type: "generateToken", tokenName: "GIGATREE", value: 25000000, walletId: "cZ4TJ4frv8hdT6a4et4n4oYoePgmABWhj7YTh2wJ926Z", createdOn: Date.now()} }]
     },
     blockInfo: {
       signatureBlock: null,
@@ -73,6 +73,7 @@ app.get("/helpers/genesisBlock", async (req, res) => {
 
 app.get("/helpers/checkMyWallet", async (req, res) => {
   let wallet = await wallets.get(fs.readFileSync("GIGATREEpublicKey.pem").toString("utf8"))
+  // let wallet = await wallets.get("hello")
   console.log("🌱 - file: helpers.js:76 - app.get - wallet:", wallet)
   res.json(wallet);
 });
@@ -123,10 +124,10 @@ app.get("/whichWalletsToSync", async (req, res) => {
           res.json("synced")
           return;
         }
-    
+
         let min = 0;
         let max = 0;
-    
+
         if ((data.blocksIndex - data.walletsIndex) > 10) {
           min = data.walletsIndex + 1;
           max = min + 9;
@@ -138,7 +139,7 @@ app.get("/whichWalletsToSync", async (req, res) => {
             min = 0;
           }
         }
-    
+
         res.json({ min: min, max: max });
       })
       .catch(function (error) {
@@ -179,29 +180,71 @@ app.get("/syncMyOwnWallets", async (req, res) => {
         let transaction = transactions[j]
         console.log("🌱 - file: helpers.js:174 - app.get - transaction:", transaction)
 
-        switch (transaction.type) {
+        switch (transaction.message.type) {
           case "generateToken":
-            let walletIdisExist = await wallets.get(transaction.walletId)
-            console.log("🌱 - file: helpers.js:179 - app.get - walletId:", walletIdisExist)
-            if(walletIdisExist == undefined) {
-              await wallets.put(transaction.walletId,
+            let newWalletCreator = await wallets.get(transaction.message.walletId)
+            console.log("🌱 - file: helpers.js:179 - app.get - newWalletCreator:", newWalletCreator)
+            if (newWalletCreator == undefined) {
+              await wallets.put(transaction.message.walletId,
                 {
                   tokens: {
-                    [transaction.tokenName] : transaction.value
+                    [transaction.message.tokenName]: {
+                      value: transaction.message.value,
+                      feesPaid: 0
+                    }
                   },
-                  creationDate : Date.now(),
+                  creationDate: Date.now(),
                   lastTransaction: {
                     block: null,
-                    hash: null
+                    id: null
                   }
                 }
               );
             }
             break;
+          case "sendToken":
+            let walletIdSender = helpers.verifySignature(transaction.message, transaction.info.signature)
+            console.log("🌱 - file: informations.js:206 - app.get - walletIdSender:", walletIdSender)
+            let walletIdReceiver = transaction.message.toPublicKey
+            let walletSender = await wallets.get(walletIdSender)
+            let walletReceiver = await wallets.get(walletIdReceiver)
+            if(walletReceiver == undefined){
+              await wallets.put(walletIdReceiver,
+                {
+                  tokens: {
+                    [transaction.message.tokenName]: {
+                      value: transaction.message.value,
+                      feesPaid: 0
+                    }
+                  },
+                  creationDate: Date.now(),
+                  lastTransaction: {
+                    block: null,
+                    id: null
+                  }
+                }
+              );
+              walletSender.tokens[transaction.message.tokenName].value -= transaction.message.amountToSendPlusGazFee
+              walletSender.tokens[transaction.message.tokenName].feesPaid += transaction.message.gazFees
+              walletSender.lastTransaction.block = i
+              walletSender.lastTransaction.id = transaction.message.randomId
+              console.log("🌱 - file: informations.js:231 - app.get - walletSender:", walletSender)
+              await wallets.put(walletIdSender, walletSender)
+            } else if(walletIdReceiver != undefined){
+              walletReceiver.tokens[transaction.message.tokenName].value += transaction.message.value
+
+              walletSender.tokens[transaction.message.tokenName].value -= transaction.message.amountToSendPlusGazFee
+              walletSender.tokens[transaction.message.tokenName].feesPaid += transaction.message.gazFees
+              walletSender.lastTransaction.block = i
+              walletSender.lastTransaction.id = transaction.message.randomId
+              console.log("🌱 - file: informations.js:231 - app.get - walletSender:", walletSender)
+              await wallets.put(walletIdSender, walletSender)
+            }
+            break;
           default:
             break;
         }
-        
+
 
       }
     }

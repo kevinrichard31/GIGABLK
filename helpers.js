@@ -5,7 +5,7 @@ const bs58 = require("bs58");
 const fs = require("fs");
 const axios = require("axios");
 // LMDB
-const { blocks, wallets, infos, nodesList } = require('./lmdbSetup.js');
+const { blocks, wallets, infos, nodesList, pool } = require('./lmdbSetup.js');
 
 function toPrice2(params) {
   return parseFloat(params).toFixed(2);
@@ -79,6 +79,96 @@ async function amountToSendPlusGazFeeCalculator(amountToSend){
   return amountToSendPlusGazFee;
 }
 
+async function gazFeeCalculator(amountToSend){
+  let gazFeePercent = await infos.get("gazFee");
+  let gazFee = (amountToSend*gazFeePercent/100);
+  return gazFee;
+}
+
+function makeid(length) {
+  let result = '';
+  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  const charactersLength = characters.length;
+  let counter = 0;
+  while (counter < length) {
+    result += characters.charAt(Math.floor(Math.random() * charactersLength));
+    counter += 1;
+  }
+  return result;
+}
+
+function sortByRandomId(arr) {
+  return arr.sort((a, b) => {
+    const idA = a.message.randomId;
+    const idB = b.message.randomId;
+
+    // Compare les deux chaînes en les convertissant en valeurs numériques si possible
+    const numA = parseFloat(idA) || idA;
+    const numB = parseFloat(idB) || idB;
+
+    if (numA < numB) {
+      return -1;
+    }
+    if (numA > numB) {
+      return 1;
+    }
+    // Si les deux chaînes sont égales en valeur numérique, compare les chaînes en ordre alphabétique
+    if (typeof numA === 'string' && typeof numB === 'string') {
+      return numA.localeCompare(numB);
+    }
+    return 0;
+  });
+}
+
+// ********************************************* //
+// ************** BLOCK BUILDER **************** //
+// ********************************************* //
+async function blockBuilder(){
+  let poolData = await pool.getRange()
+  let count = 0
+  let transactions = []
+  let blockIndex = await blocks.get("blocksIndex")
+  let newBlockIndex = blockIndex + 1
+  for(let transaction of poolData){
+    count++
+    if(count <= 20){
+      transactions.push(transaction.value)
+    }
+  }
+  if(count == 0){ // RETURN IF TRANSACTIONS IS EMPTY TO DISABLE BLOCK CREATION
+    return; 
+  }
+  const sortedArray = sortByRandomId(transactions);
+  let block = {
+    blockMessage: {
+      index: newBlockIndex,
+      timestamp: Date.now(),
+    },
+    blockInfo: {
+      signatureBlock: null,
+      howToVerifyInfo: "To verify block, you need to use helpers.js use blockMessage as message and blockInfo.signatureBlock as signature to verify authenticity"
+    }
+  };
+
+  block.blockMessage.transactions = transactions
+  block.blockInfo.signatureBlock = signMessage(block.blockMessage);
+  await blocks.put(newBlockIndex, block);
+  await blocks.put("blocksIndex", newBlockIndex);
+  await pool.clearAsync()
+}
+setInterval(() => {
+  blockBuilder()
+}, 3000);
+
+// ************************************************* //
+// ************** BLOCK CONSTRUCTOR **************** //
+// ************************************************* //
+
+// Constructor function for blocks
+
+
+
+
 module.exports = {
   toPrice2,
   toPrice8,
@@ -88,5 +178,8 @@ module.exports = {
   getMyIp,
   getPublicKey,
   ipSizeAcceptable,
-  amountToSendPlusGazFeeCalculator
+  amountToSendPlusGazFeeCalculator,
+  makeid,
+  blockBuilder,
+  gazFeeCalculator
 };

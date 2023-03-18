@@ -12,7 +12,7 @@ let sha3 = require("js-sha3");
 let ec = new elliptic.ec("secp256k1");
 
 // LMDB
-const { blocks, wallets, infos, nodesList } = require('./lmdbSetup.js');
+const { blocks, wallets, infos, nodesList, pool } = require('./lmdbSetup.js');
 
 // HELPERS
 const helpers = require("./helpers.js");
@@ -86,28 +86,36 @@ app.get("/sendBecomeStacker", async (req, res) => { // childs => /becomeStacker
 });
 
 // DEPENDENCIE OF SENDTRANSACTION
-app.post("/transaction", async (req, res) => { // childs => /becomeStacker
-  let walletId = helpers.verifySignature(req.body.message, req.body.info.signature)
-  let amountToSend = req.body.message.value
-  let wallet = await wallets.get(walletId)
+// ***** PART REALLY IMPORTANT ***** VERIFY ALL TRANSACTION BEFORE PUSHING TO POOL USING SWITCH
+app.post("/addToPool", async (req, res) => {
+  console.log(req.body)
+  switch (req.body.message.type) {
+    case "sendToken":
+      let walletId = helpers.verifySignature(req.body.message, req.body.info.signature)
+      let amountToSend = req.body.message.value
+      let wallet = await wallets.get(walletId)
+      let amountToSendPlusGazFee = await helpers.amountToSendPlusGazFeeCalculator(amountToSend)
+      if(wallet && wallet.tokens[req.body.message.tokenName]){
+        if(wallet.tokens[req.body.message.tokenName].value >= amountToSendPlusGazFee){
+          // Ajouter la transaction à pool de transaction
+          await pool.put(req.body.message.randomId, req.body)
+          res.json("Transaction added to pool, imminent validation... check on explorer")
+        } else {
+          res.json("not enough to spend")
+        }
+      } else {
+        res.json("no wallet")
+      }
+      break;
 
-  let amountToSendPlusGazFee = await helpers.amountToSendPlusGazFeeCalculator(amountToSend)
-  if(wallet){
-    if(wallet.tokens[req.body.message.tokenName] >= amountToSendPlusGazFee){
-      // Ajouter la transaction à pool de transaction
-      res.json(amountToSendPlusGazFee)
-    } else {
-      res.json("not enough to spend")
-    }
-  } else {
-    res.json("no wallet")
+    default:
+      break;
   }
-
 });
 
 // SENDTRANSACTION TO NODE - PASS PARAM $VALUE
 // GENERATE TOKEN , CAN'T CREATE TOKEN IF YOU ALREADY HAVE TOKENS IN YOUR WALLETS
-app.get("/sendTransaction", async (req, res) => { // childs => /becomeStacker > 
+app.get("/sendTransaction", async (req, res) => { // childs => /addToPool > 
   try {
     if (!req.query.type) {
       return res.status(400).json("Value is missing");
@@ -126,17 +134,20 @@ app.get("/sendTransaction", async (req, res) => { // childs => /becomeStacker >
     async function executeSwitch(){
       switch (req.query.type) {
         case "sendToken":
-          let sendTokenValue = parseFloat(req.query.value) 
-          if(isNaN(sendTokenValue)){
+          let amountToSend = parseFloat(req.query.value) 
+          if(isNaN(amountToSend)){
             return false
           }
           if(req.query.toPublicKey == undefined || req.query.tokenName == undefined){
             return false
           }
           prepareData.message.type = req.query.type
-          prepareData.message.value = sendTokenValue
+          prepareData.message.value = amountToSend
           prepareData.message.toPublicKey = req.query.toPublicKey
           prepareData.message.tokenName = req.query.tokenName
+          prepareData.message.randomId = helpers.makeid(10)
+          prepareData.message.amountToSendPlusGazFee = await helpers.amountToSendPlusGazFeeCalculator(amountToSend)
+          prepareData.message.gazFees = await helpers.gazFeeCalculator(amountToSend)
           break;
         default:
 
@@ -149,8 +160,7 @@ app.get("/sendTransaction", async (req, res) => { // childs => /becomeStacker >
         return
       }
       prepareData.info.signature = helpers.signMessage(prepareData.message);
-      console.log(prepareData)
-      axios.post(localurl + "transaction", prepareData)
+      axios.post(localurl + "addToPool", prepareData)
       .then(function (response) {
         res.json(response.data)
       })
