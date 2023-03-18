@@ -55,7 +55,7 @@ app.get("/helpers/genesisBlock", async (req, res) => {
     blockMessage: {
       index: 0,
       timestamp: Date.now(),
-      transactions: [{ message : {type: "generateToken", tokenName: "GIGATREE", value: 25000000, walletId: "cZ4TJ4frv8hdT6a4et4n4oYoePgmABWhj7YTh2wJ926Z", createdOn: Date.now()} }]
+      transactions: [{ message : {type: "generateToken", tokenName: "GIGATREE", value: 200, walletId: "cZ4TJ4frv8hdT6a4et4n4oYoePgmABWhj7YTh2wJ926Z", createdOn: Date.now()} }]
     },
     blockInfo: {
       signatureBlock: null,

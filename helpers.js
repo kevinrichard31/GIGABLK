@@ -4,6 +4,7 @@ let ec = new elliptic.ec("secp256k1");
 const bs58 = require("bs58");
 const fs = require("fs");
 const axios = require("axios");
+const localurl = "http://localhost:3000/";
 // LMDB
 const { blocks, wallets, infos, nodesList, pool } = require('./lmdbSetup.js');
 
@@ -155,6 +156,19 @@ async function blockBuilder(){
   await blocks.put(newBlockIndex, block);
   await blocks.put("blocksIndex", newBlockIndex);
   await pool.clearAsync()
+
+  await axios.get(localurl + "syncMyOwnWallets")   // SYNC WALLETS
+  .then(function (response) {
+    console.log('SYNCED********************')
+    return response.data;
+  })
+  .catch(function (error) {
+    console.log(error);
+  })
+
+  // QUAND UN BLOCK EST AJOUTÉ, METTRE A JOUR AUTOMATIQUEMENT TOUT LES WALLETS
+  // QUAND UNE TRANSACTION EST ENVOYÉ, AVANT D'AJOUTER A LA POOL, VERIFIER QUE LES BLOCKS SONT A JOUR PAR RAPPORT AU WALLETS INDEX
+
 }
 setInterval(() => {
   blockBuilder()
