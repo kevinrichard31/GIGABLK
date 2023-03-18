@@ -92,13 +92,18 @@ app.post("/addToPool", async (req, res) => {
   switch (req.body.message.type) {
     case "sendToken":
       let walletId = helpers.verifySignature(req.body.message, req.body.info.signature)
+      let isExistInPool = await pool.get(walletId)
+      if(isExistInPool != undefined){
+        res.json("Already a transaction in progress for this wallet, wait for next block")
+        return;
+      }
       let amountToSend = req.body.message.value
       let wallet = await wallets.get(walletId)
       let amountToSendPlusGazFee = await helpers.amountToSendPlusGazFeeCalculator(amountToSend)
       if(wallet && wallet.tokens[req.body.message.tokenName]){
         if(wallet.tokens[req.body.message.tokenName].value >= amountToSendPlusGazFee){
           // Ajouter la transaction à pool de transaction
-          await pool.put(req.body.message.randomId, req.body)
+          await pool.put(walletId, req.body)
           res.json("Transaction added to pool, imminent validation... check on explorer")
         } else {
           res.json("not enough to spend")
@@ -182,7 +187,7 @@ app.get("/sendTransaction", async (req, res) => { // childs => /addToPool >
 
 
 app.listen(port, () => {
-  console.log(`Example app listening at http://localhost:${port}`);
+  console.log(`Gigatree Node launched at http://localhost:${port}`);
 });
 
 module.exports = router;

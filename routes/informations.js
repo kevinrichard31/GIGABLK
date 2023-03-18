@@ -51,24 +51,32 @@ app.get("/helpers/generateKeyPair", async (req, res) => {
 
 // GENERATE KEY GENESIS BLOCK (FIRST BLOCK => 0)
 app.get("/helpers/genesisBlock", async (req, res) => {
-  let genesisBlock = {
-    blockMessage: {
-      index: 0,
-      timestamp: Date.now(),
-      transactions: [{ message : {type: "generateToken", tokenName: "GIGATREE", value: 200, walletId: "cZ4TJ4frv8hdT6a4et4n4oYoePgmABWhj7YTh2wJ926Z", createdOn: Date.now()} }]
-    },
-    blockInfo: {
-      signatureBlock: null,
-      howToVerifyInfo: "To verify block, you need to use helpers.js use blockMessage as message and blockInfo.signatureBlock as signature to verify authenticity"
-    }
-  };
+  let blockZero = await blocks.get(0);
+  if(blockZero != undefined){
+    res.json('BLock zero existe deja')
+    return;
+  } else {
+    let genesisBlock = {
+      blockMessage: {
+        index: 0,
+        timestamp: Date.now(),
+        transactions: [{ message : {type: "generateToken", tokenName: "GIGATREE", value: 25000000, walletId: "cZ4TJ4frv8hdT6a4et4n4oYoePgmABWhj7YTh2wJ926Z", createdOn: Date.now()} }]
+      },
+      blockInfo: {
+        signatureBlock: null,
+        howToVerifyInfo: "To verify block, you need to use helpers.js use blockMessage as message and blockInfo.signatureBlock as signature to verify authenticity"
+      }
+    };
+  
+    genesisBlock.blockInfo.signatureBlock = helpers.signMessage(genesisBlock.blockMessage);
+  
+    await blocks.put(0, genesisBlock);
+    await blocks.put("blocksIndex", 0);
+    let x = await blocks.get(0);
+    res.json(x);
+  }
 
-  genesisBlock.blockInfo.signatureBlock = helpers.signMessage(genesisBlock.blockMessage);
 
-  await blocks.put(0, genesisBlock);
-  await blocks.put("blocksIndex", 0);
-  let x = await blocks.get(0);
-  res.json(x);
 });
 
 app.get("/helpers/checkMyWallet", async (req, res) => {
@@ -178,7 +186,7 @@ app.get("/syncMyOwnWallets", async (req, res) => {
 
       for (let j = 0; j < transactions.length; j++) { // DEUXIEME BOUCLE SYNCHRONISATION DE CHAQUES TRANSACTIONS
         let transaction = transactions[j]
-        console.log("🌱 - file: helpers.js:174 - app.get - transaction:", transaction)
+        console.log("🌱 - file: informations.js:189 - app.get - transaction:", transaction)
 
         switch (transaction.message.type) {
           case "generateToken":
@@ -225,6 +233,7 @@ app.get("/syncMyOwnWallets", async (req, res) => {
                 }
               );
               walletSender.tokens[transaction.message.tokenName].value -= transaction.message.amountToSendPlusGazFee
+              console.log("🌱 - file: informations.js:236 - app.get - transaction.message.tokenName:", transaction.message)
               walletSender.tokens[transaction.message.tokenName].feesPaid += transaction.message.gazFees
               walletSender.lastTransaction.block = i
               walletSender.lastTransaction.id = transaction.message.randomId

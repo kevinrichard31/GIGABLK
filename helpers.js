@@ -172,7 +172,7 @@ async function blockBuilder(){
 }
 setInterval(() => {
   blockBuilder()
-}, 3000);
+}, 2000);
 
 // ************************************************* //
 // ************** BLOCK CONSTRUCTOR **************** //
