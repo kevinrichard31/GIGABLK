@@ -29,8 +29,9 @@ const port = 3000;
 
 
 // ************ INITIALISATION FIRST NODE ********** //
-infos.put("gazFee", 0.25)
+infos.put("gazFee", 0.25) // PERCENT
 infos.put("nodeVersion", 1)
+infos.put("gazFeeSubToken", 1) // AMOUNT FIXE
 // ************ INITIALISATION FIRST NODE ********** //
 
 
