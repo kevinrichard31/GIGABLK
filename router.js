@@ -31,7 +31,8 @@ const port = 3000;
 // ************ INITIALISATION FIRST NODE ********** //
 infos.put("gazFee", 0.25) // PERCENT
 infos.put("nodeVersion", 1)
-infos.put("gazFeeSubToken", 1) // AMOUNT FIXE
+infos.put("gazFeeSubToken", 1) // AMOUNT FIXED
+infos.put("generateTokenFee", 10) // AMOUNT FIXED
 // ************ INITIALISATION FIRST NODE ********** //
 
 
@@ -155,13 +156,17 @@ app.get("/sendTransaction", async (req, res) => { // childs => /addToPool >
           prepareData.message.amountToSendPlusGazFee = await helpers.amountToSendPlusGazFeeCalculator(amountToSend)
           prepareData.message.gazFees = await helpers.gazFeeCalculator(amountToSend)
           break;
+        case "generateToken":
+          console.log('test')
+          console.log(req.query)
+          break;
         default:
-
+          
           break;
       }
     }
     executeSwitch().then((data)=>{
-      if(data == false){
+      if(data == false || data == undefined){
         res.json('Verify your parameters')
         return
       }

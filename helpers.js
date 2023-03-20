@@ -121,6 +121,37 @@ function sortByRandomId(arr) {
   });
 }
 
+function controlNameGenerateToken(texte) {
+  // Check the length of the text
+  // Check that the text does not contain special characters or numbers
+  // Check that the text is in upper case
+  // If all conditions are met, return true
+  if (texte.length > 25) {
+    return false;
+  }
+
+  var regex = /^[A-Z\s]+$/;
+  if (!regex.test(texte)) {
+    return false;
+  }
+
+  if (texte !== texte.toUpperCase()) {
+    return false;
+  }
+
+  return true;
+}
+
+function isBetweenOneMillionAndOneBillion(value) {
+  // Vérifie si la valeur est un entier
+  if (Number.isInteger(value)) {
+    // Vérifie si la valeur est comprise entre 1 million et 1 milliard
+    if (value >= 1000000 && value <= 1000000000) {
+      return true;
+    }
+  }
+  return false;
+}
 // ********************************************* //
 // ************** BLOCK BUILDER **************** //
 // ********************************************* //
@@ -195,5 +226,7 @@ module.exports = {
   amountToSendPlusGazFeeCalculator,
   makeid,
   blockBuilder,
-  gazFeeCalculator
+  gazFeeCalculator,
+  controlNameGenerateToken,
+  isBetweenOneMillionAndOneBillion
 };
