@@ -267,5 +267,16 @@ app.get("/syncMyOwnWallets", async (req, res) => {
   res.json({ message: "syncMyOwnWallets", walletsIndex: walletsIndex });
 });
 
+app.get("/getPeerList", async (req, res) => {
+  console.log('tet')
+  res.json(['localhost:3000'])
+});
+
+app.get("/getWallet", async (req, res) => {
+
+  let wallet = await wallets.get(req.query.walletid)
+  res.json(wallet)
+});
+
 
 module.exports = app;

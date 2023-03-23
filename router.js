@@ -142,6 +142,7 @@ app.get("/sendTransaction", async (req, res) => { // childs => /addToPool >
       switch (req.query.type) {
         case "sendToken":
           let amountToSend = parseFloat(req.query.value) 
+          console.log("🌱 - file: router.js:145 - executeSwitch - amountToSend:", amountToSend)
           if(isNaN(amountToSend)){
             return false
           }
@@ -155,6 +156,8 @@ app.get("/sendTransaction", async (req, res) => { // childs => /addToPool >
           prepareData.message.randomId = helpers.makeid(10)
           prepareData.message.amountToSendPlusGazFee = await helpers.amountToSendPlusGazFeeCalculator(amountToSend)
           prepareData.message.gazFees = await helpers.gazFeeCalculator(amountToSend)
+          console.log("🌱 - file: router.js:159 - executeSwitch - prepareData.message.gazFees:", prepareData.message.gazFees)
+          return prepareData
           break;
         case "generateToken":
           console.log('test')
