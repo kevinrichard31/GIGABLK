@@ -10,8 +10,6 @@ async function boucles() {
   
   boucles();
 
-  { type: "sendToken", value: 100, toPubK: "", tokenName:"" }
-
 
   // old  syncMyOwnWallets
   let walletId = helpers.verifySignature(block.blockMessage, block.blockInfo.signatureBlock)
