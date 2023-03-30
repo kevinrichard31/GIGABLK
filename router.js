@@ -141,7 +141,7 @@ app.get("/sendTransaction", async (req, res) => { // childs => /addToPool >
     async function executeSwitch(){
       switch (req.query.type) {
         case "sendToken":
-          let amountToSend = parseFloat(req.query.value) 
+          let amountToSend = Math.abs(parseFloat(req.query.value))
           console.log("🌱 - file: router.js:145 - executeSwitch - amountToSend:", amountToSend)
           if(isNaN(amountToSend)){
             return false
