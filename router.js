@@ -174,6 +174,7 @@ app.get("/sendTransaction", async (req, res) => { // childs => /addToPool >
         return
       }
       prepareData.info.signature = helpers.signMessage(prepareData.message);
+      console.log("🌱 - file: router.js:177 - executeSwitch - prepareData:", prepareData)
       axios.post(localurl + "addToPool", prepareData)
       .then(function (response) {
         res.json(response.data)
@@ -190,6 +191,13 @@ app.get("/sendTransaction", async (req, res) => { // childs => /addToPool >
   } catch (error) {
     res.json("Erreur lors de la transaction")
   }
+
+
+});
+
+app.post("/sendTransaction", async (req, res) => { // childs => /addToPool > 
+console.log(req.body)
+res.json('hello')
 
 
 });
