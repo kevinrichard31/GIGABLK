@@ -92,7 +92,8 @@ app.get("/helpers/nodeInformations", async (req, res) => {
     blocksIndex: await blocks.get("blocksIndex") ?? null,
     walletsIndex: await wallets.get("walletsIndex") ?? null,
     nodeVersion: await infos.get("nodeVersion") ?? null,
-    gazFee: await infos.get("gazFee") ?? null
+    gazFee: await infos.get("gazFee") ?? null,
+    minimumGazFee: await infos.get("minimumGazFee") ?? null
   }
   res.json(informations);
 });
@@ -240,15 +241,15 @@ app.get("/syncMyOwnWallets", async (req, res) => {
                 }
               );
               walletSender.tokens[transaction.message.tokenName].value -= transaction.message.amountToSendPlusGazFee
-              walletSender.tokens[transaction.message.tokenName].feesPaid += transaction.message.gazFees
+              walletSender.tokens[transaction.message.tokenName].feesPaid = helpers.toPrice8(walletSender.tokens[transaction.message.tokenName].feesPaid + transaction.message.gazFees)
               walletSender.lastTransaction.block = i
               walletSender.lastTransaction.id = transaction.message.randomId
               await wallets.put(walletIdSender, walletSender)
             } else if(walletIdReceiver != undefined){
-              walletReceiver.tokens[transaction.message.tokenName].value += transaction.message.value
-              walletSender.tokens[transaction.message.tokenName].value -= transaction.message.amountToSendPlusGazFee
+              walletReceiver.tokens[transaction.message.tokenName].value = helpers.toPrice8(walletReceiver.tokens[transaction.message.tokenName].value + transaction.message.value)
               
-              walletSender.tokens[transaction.message.tokenName].feesPaid += transaction.message.gazFees
+              walletSender.tokens[transaction.message.tokenName].value = helpers.toPrice8(walletSender.tokens[transaction.message.tokenName].value - transaction.message.amountToSendPlusGazFee)
+              walletSender.tokens[transaction.message.tokenName].feesPaid = helpers.toPrice8(walletSender.tokens[transaction.message.tokenName].feesPaid + transaction.message.gazFees)
               walletSender.lastTransaction.block = i
               walletSender.lastTransaction.id = transaction.message.randomId
               await wallets.put(walletIdSender, walletSender)

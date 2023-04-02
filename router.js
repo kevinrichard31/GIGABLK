@@ -30,6 +30,7 @@ const port = 3000;
 
 // ************ INITIALISATION FIRST NODE ********** //
 infos.put("gazFee", 0.25) // PERCENT
+infos.put("minimumGazFee", 0.00050000) // MINIMUM GAZ FEE FIXED
 infos.put("nodeVersion", 1)
 infos.put("gazFeeSubToken", 1) // AMOUNT FIXED
 infos.put("generateTokenFee", 10) // AMOUNT FIXED
@@ -48,11 +49,11 @@ app.post("/becomeStacker", async (req, res) => {
   var ipClient = helpers.splitString(req.socket.remoteAddress, ":"); // '127.0.0.1'
   let ipSelected = (ipClient == undefined) ? '127.0.0.1' : ipClient
   let ipExist = await nodesList.get(ipSelected)
-  if(ipExist == undefined){
+  if (ipExist == undefined) {
     await nodesList.put(ipSelected, {
       timestamp: Date.now(),
       stacker: true,
-      publicKey : walletId
+      publicKey: walletId
     })
     res.json("Node added to nodesList db")
   } else {
@@ -62,22 +63,22 @@ app.post("/becomeStacker", async (req, res) => {
 
 //
 app.get("/sendBecomeStacker", async (req, res) => { // childs => /becomeStacker
-// pour devenir stacker il faut signer un message avec son wallet et envoyer son ip
+  // pour devenir stacker il faut signer un message avec son wallet et envoyer son ip
 
-    let prepareData = {
-      message: {
-        timestamp: Date.now(),
-        type: "becomeStacker"
-      },
-      info: {
-        signature: null,
-        howToVerifyInfo: "To verify message, you need to use helpers.js tool verifySignature() use message as message and info.signature as signature to verify authenticity"
-      }
-    };
+  let prepareData = {
+    message: {
+      timestamp: Date.now(),
+      type: "becomeStacker"
+    },
+    info: {
+      signature: null,
+      howToVerifyInfo: "To verify message, you need to use helpers.js tool verifySignature() use message as message and info.signature as signature to verify authenticity"
+    }
+  };
 
-    prepareData.info.signature = helpers.signMessage(prepareData.message);
-    
-    axios.post(localurl + "becomeStacker", prepareData)
+  prepareData.info.signature = helpers.signMessage(prepareData.message);
+
+  axios.post(localurl + "becomeStacker", prepareData)
     .then(function (response) {
       console.log("🌱 - file: router.js:267 - response:", response.data)
       res.json(response.data)
@@ -95,15 +96,15 @@ app.post("/addToPool", async (req, res) => {
     case "sendToken":
       let walletId = helpers.verifySignature(req.body.message, req.body.info.signature)
       let isExistInPool = await pool.get(walletId)
-      if(isExistInPool != undefined){
+      if (isExistInPool != undefined) {
         res.json("Already a transaction in progress for this wallet, wait for next block")
         return;
       }
       let amountToSend = req.body.message.value
       let wallet = await wallets.get(walletId)
       let amountToSendPlusGazFee = await helpers.amountToSendPlusGazFeeCalculator(amountToSend)
-      if(wallet && wallet.tokens[req.body.message.tokenName]){
-        if(wallet.tokens[req.body.message.tokenName].value >= amountToSendPlusGazFee){
+      if (wallet && wallet.tokens[req.body.message.tokenName]) {
+        if (wallet.tokens[req.body.message.tokenName].value >= amountToSendPlusGazFee) {
           // Ajouter la transaction à pool de transaction
           await pool.put(walletId, req.body)
           res.json("Transaction added to pool, imminent validation... check on explorer")
@@ -137,16 +138,17 @@ app.get("/sendTransaction", async (req, res) => { // childs => /addToPool >
         howToVerifyInfo: "To verify message, you need to use helpers.js tool verifySignature() use message as message and info.signature as signature to verify authenticity"
       }
     };
-    
-    async function executeSwitch(){
+
+    async function executeSwitch() {
       switch (req.query.type) {
         case "sendToken":
           let amountToSend = Math.abs(parseFloat(req.query.value))
           console.log("🌱 - file: router.js:145 - executeSwitch - amountToSend:", amountToSend)
-          if(isNaN(amountToSend)){
+
+          if (isNaN(amountToSend)) {
             return false
           }
-          if(req.query.toPublicKey == undefined || req.query.tokenName == undefined){
+          if (req.query.toPublicKey == undefined || req.query.tokenName == undefined) {
             return false
           }
           prepareData.message.type = req.query.type
@@ -164,40 +166,58 @@ app.get("/sendTransaction", async (req, res) => { // childs => /addToPool >
           console.log(req.query)
           break;
         default:
-          
+
           break;
       }
     }
-    executeSwitch().then((data)=>{
-      if(data == false || data == undefined){
+    executeSwitch().then(async (data) => {
+      if (data == false || data == undefined) {
         res.json('Verify your parameters')
         return
       }
       prepareData.info.signature = helpers.signMessage(prepareData.message);
       console.log("🌱 - file: router.js:177 - executeSwitch - prepareData:", prepareData)
+      if (await helpers.validateObject(prepareData) == false) {
+        res.json('error')
+        return false;
+      }
       axios.post(localurl + "addToPool", prepareData)
-      .then(function (response) {
-        res.json(response.data)
-      })
-      .catch(function (error) {
-        res.json(error)
-      })
+        .then(function (response) {
+          res.json(response.data)
+        })
+        .catch(function (error) {
+          res.json(error)
+        })
     })
-
-
-
-  
-
   } catch (error) {
     res.json("Erreur lors de la transaction")
   }
-
-
 });
 
 app.post("/sendTransaction", async (req, res) => { // childs => /addToPool > 
-console.log(req.body)
-res.json('hello')
+  try {
+
+    console.log(req.body)
+    switch (req.body.message.type) {
+      case 'sendToken':
+        if (await helpers.validateObject(req.body) == false) {
+          res.json('error')
+          return false;
+        }
+        axios.post(localurl + "addToPool", req.body)
+          .then(function (response) {
+            res.json(response.data)
+          })
+          .catch(function (error) {
+            res.json(error)
+          })
+        break;
+      default:
+        break;
+    }
+  } catch (error) {
+    res.json('error')
+  }
 
 
 });

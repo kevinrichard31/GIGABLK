@@ -9,11 +9,11 @@ const localurl = "http://localhost:3000/";
 const { blocks, wallets, infos, nodesList, pool } = require('./lmdbSetup.js');
 
 function toPrice2(params) {
-  return parseFloat(params).toFixed(2);
+  return parseFloat(parseFloat(params).toFixed(2));
 }
 
 function toPrice8(params) {
-  return parseFloat(params).toFixed(8);
+  return parseFloat(parseFloat(params).toFixed(8));
 }
 
 function splitString(stringToSplit, separator) {
@@ -215,6 +215,65 @@ setInterval(() => {
 // Constructor function for blocks
 
 
+async function validateObject(obj) {
+  // Vérifier que l'objet a les propriétés message et info
+  if (!obj.message || !obj.info) {
+    return false;
+  }
+
+  // Vérifier que le timestamp est inférieur à 15 secondes par rapport à la date actuelle
+  const now = new Date().getTime();
+  if (now - obj.message.timestamp > 15000) {
+    return false;
+  }
+
+  // Vérifier que value n'est pas négatif
+  if (obj.message.value < 0) {
+    return false;
+  }
+
+  // Vérifier que toPublicKey est une chaîne non vide de moins de 60 caractères et ne contient pas de chiffres
+  if (typeof obj.message.toPublicKey !== 'string' || obj.message.toPublicKey.length === 0 || obj.message.toPublicKey.length > 60) {
+    return false;
+  }
+
+  // Vérifier que tokenName est une chaîne de moins de 60 caractères
+  if (typeof obj.message.tokenName !== 'string' || obj.message.tokenName.length > 60) {
+    return false;
+  }
+
+  // Vérifier que randomId est une chaîne de moins de 60 caractères
+  if (typeof obj.message.randomId !== 'string' || obj.message.randomId.length > 60) {
+    return false;
+  }
+
+  // Vérifier que amountToSendPlusGazFee et gazFees sont des nombres
+  if (typeof obj.message.amountToSendPlusGazFee !== 'number' || typeof obj.message.gazFees !== 'number') {
+    return false;
+  }
+
+  // Vérifier que la signature est une chaîne de moins de 250 caractères
+  if (typeof obj.info.signature !== 'string' || obj.info.signature.length > 250) {
+    return false;
+  }
+
+  let minimumGazFee = await infos.get('minimumGazFee')
+
+  if(obj.message.gazFees < minimumGazFee){
+    return false;
+  }
+
+  // Vérifier qu'il n'y a pas d'autres champs dans l'objet
+  const allowedKeys = ['message', 'info'];
+  const keys = Object.keys(obj);
+  if (keys.length !== allowedKeys.length || !keys.every(key => allowedKeys.includes(key))) {
+    return false;
+  }
+
+  return true;
+}
+
+
 
 
 module.exports = {
@@ -231,5 +290,6 @@ module.exports = {
   blockBuilder,
   gazFeeCalculator,
   controlNameGenerateToken,
-  isBetweenOneMillionAndOneBillion
+  isBetweenOneMillionAndOneBillion,
+  validateObject
 };
