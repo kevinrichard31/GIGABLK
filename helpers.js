@@ -152,6 +152,19 @@ function isBetweenOneMillionAndOneBillion(value) {
   }
   return false;
 }
+
+async function isRandomIdAlreadyExist(walletSenderId, randomIdFromTransaction){
+  let wallet = await wallets.get(walletSenderId)
+  let idFromWalletLastTransaction = wallet.lastTransaction.id
+  if(idFromWalletLastTransaction == randomIdFromTransaction){
+    console.log('test')
+    return true;
+  } else {
+    return false;
+  }
+}
+
+
 // ********************************************* //
 // ************** BLOCK BUILDER **************** //
 // ********************************************* //
@@ -205,17 +218,11 @@ setInterval(() => {
   blockBuilder()
 }, 2000);
 
-
-
-
-// ************************************************* //
-// ************** BLOCK CONSTRUCTOR **************** //
-// ************************************************* //
-
 // Constructor function for blocks
 
 
 async function validateObject(obj) {
+
   // Vérifier que l'objet a les propriétés message et info
   if (!obj.message || !obj.info) {
     return false;
@@ -258,8 +265,8 @@ async function validateObject(obj) {
   }
 
   let minimumGazFee = await infos.get('minimumGazFee')
-
   if(obj.message.gazFees < minimumGazFee){
+    console.log('qdsf')
     return false;
   }
 
@@ -291,5 +298,6 @@ module.exports = {
   gazFeeCalculator,
   controlNameGenerateToken,
   isBetweenOneMillionAndOneBillion,
-  validateObject
+  validateObject,
+  isRandomIdAlreadyExist
 };

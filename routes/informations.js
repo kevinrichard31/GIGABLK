@@ -9,7 +9,7 @@ const axios = require("axios");
 const localurl = "http://localhost:3000/";
 
 // LMDB
-const { blocks, wallets, infos, nodesList } = require('../lmdbSetup.js');
+const { blocks, wallets, infos, nodesList, tokens } = require('../lmdbSetup.js');
 // GENERATE KEY PAIRS
 app.get("/helpers/generateKeyPair", async (req, res) => {
   if (fs.existsSync("GIGATREEprivateKey.pem" || "GIGATREEpublicKey.pem")) {
@@ -198,6 +198,7 @@ app.get("/syncMyOwnWallets", async (req, res) => {
         switch (transaction.message.type) {
           case "generateToken":
             let newWalletCreator = await wallets.get(transaction.message.walletId)
+            await tokens.put(transaction.message.tokenName, transaction.message.walletId)
             console.log("🌱 - file: helpers.js:179 - app.get - newWalletCreator:", newWalletCreator)
             if (newWalletCreator == undefined) {
               await wallets.put(transaction.message.walletId,
@@ -240,20 +241,36 @@ app.get("/syncMyOwnWallets", async (req, res) => {
                   }
                 }
               );
-              walletSender.tokens[transaction.message.tokenName].value -= transaction.message.amountToSendPlusGazFee
-              walletSender.tokens[transaction.message.tokenName].feesPaid = helpers.toPrice8(walletSender.tokens[transaction.message.tokenName].feesPaid + transaction.message.gazFees)
-              walletSender.lastTransaction.block = i
-              walletSender.lastTransaction.id = transaction.message.randomId
-              await wallets.put(walletIdSender, walletSender)
-            } else if(walletIdReceiver != undefined){
-              walletReceiver.tokens[transaction.message.tokenName].value = helpers.toPrice8(walletReceiver.tokens[transaction.message.tokenName].value + transaction.message.value)
-              
               walletSender.tokens[transaction.message.tokenName].value = helpers.toPrice8(walletSender.tokens[transaction.message.tokenName].value - transaction.message.amountToSendPlusGazFee)
               walletSender.tokens[transaction.message.tokenName].feesPaid = helpers.toPrice8(walletSender.tokens[transaction.message.tokenName].feesPaid + transaction.message.gazFees)
               walletSender.lastTransaction.block = i
               walletSender.lastTransaction.id = transaction.message.randomId
               await wallets.put(walletIdSender, walletSender)
+              // REDIRECT FEES TO CREATOR
+              let walletIdTokenCreator = await tokens.get(transaction.message.tokenName)
+              console.log("🌱 - file: informations.js:250 - app.get - walletIdTokenCreator:", walletIdTokenCreator)
+              let walletCreator = await wallets.get(walletIdTokenCreator)
+              console.log("🌱 - file: informations.js:252 - app.get - walletCreator:", walletCreator)
+              walletCreator.tokens[transaction.message.tokenName].value = helpers.toPrice8(walletCreator.tokens[transaction.message.tokenName].value + transaction.message.gazFees)
+              await wallets.put(walletIdTokenCreator, walletCreator)
+              
+            } else if(walletIdReceiver != undefined){
+              walletReceiver.tokens[transaction.message.tokenName].value = helpers.toPrice8(walletReceiver.tokens[transaction.message.tokenName].value + transaction.message.value)
+              
+              walletSender.tokens[transaction.message.tokenName].value = helpers.toPrice8(walletSender.tokens[transaction.message.tokenName].value - transaction.message.amountToSendPlusGazFee)
+
+              walletSender.tokens[transaction.message.tokenName].feesPaid = helpers.toPrice8(walletSender.tokens[transaction.message.tokenName].feesPaid + transaction.message.gazFees)
+              walletSender.lastTransaction.block = i
+              walletSender.lastTransaction.id = transaction.message.randomId
+              await wallets.put(walletIdSender, walletSender)
               await wallets.put(walletIdReceiver, walletReceiver)
+              // REDIRECT FEES TO CREATOR
+              let walletIdTokenCreator = await tokens.get(transaction.message.tokenName)
+              console.log("🌱 - file: informations.js:250 - app.get - walletIdTokenCreator:", walletIdTokenCreator)
+              let walletCreator = await wallets.get(walletIdTokenCreator)
+              console.log("🌱 - file: informations.js:252 - app.get - walletCreator:", walletCreator)
+              walletCreator.tokens[transaction.message.tokenName].value = helpers.toPrice8(walletCreator.tokens[transaction.message.tokenName].value + transaction.message.gazFees)
+              await wallets.put(walletIdTokenCreator, walletCreator)
             }
             break;
           default:

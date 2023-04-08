@@ -28,10 +28,17 @@ let pool = open({
   compression: true,
 });
 
+// Contain tokens names and walletId who receive tokens
+let tokens = open({
+  path: "./db/tokens",
+  compression: true,
+});
+
 module.exports = {
     blocks,
     wallets,
     infos,
     nodesList,
-    pool
+    pool,
+    tokens
   };

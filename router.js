@@ -92,9 +92,22 @@ app.get("/sendBecomeStacker", async (req, res) => { // childs => /becomeStacker
 // ***** PART REALLY IMPORTANT ***** VERIFY ALL TRANSACTION BEFORE PUSHING TO POOL USING SWITCH
 app.post("/addToPool", async (req, res) => {
   console.log(req.body)
+  console.log("🌱 - file: router.js:95 - app.post - req.body:", req.body)
+  
+  let walletId = helpers.verifySignature(req.body.message, req.body.info.signature) 
+  let toPubK = req.body.message.toPublicKey;
+  if(walletId == toPubK){ // SECURITY, blocks the sending of infinite tokens
+    res.json("A wallet cannot send a transaction to itself")
+    return;
+  }
+  let isRandomIdAlreadyExist = await helpers.isRandomIdAlreadyExist(walletId, req.body.message.randomId)
+  if(isRandomIdAlreadyExist == true){ // SECURITY, blocks the sending of same transaction
+    res.json("Id already exist, you can't reuse the same id")
+    return;
+  }
   switch (req.body.message.type) {
     case "sendToken":
-      let walletId = helpers.verifySignature(req.body.message, req.body.info.signature)
+
       let isExistInPool = await pool.get(walletId)
       if (isExistInPool != undefined) {
         res.json("Already a transaction in progress for this wallet, wait for next block")
@@ -156,8 +169,8 @@ app.get("/sendTransaction", async (req, res) => { // childs => /addToPool >
           prepareData.message.toPublicKey = req.query.toPublicKey
           prepareData.message.tokenName = req.query.tokenName
           prepareData.message.randomId = helpers.makeid(10)
-          prepareData.message.amountToSendPlusGazFee = await helpers.amountToSendPlusGazFeeCalculator(amountToSend)
-          prepareData.message.gazFees = await helpers.gazFeeCalculator(amountToSend)
+          prepareData.message.amountToSendPlusGazFee = helpers.toPrice8(await helpers.amountToSendPlusGazFeeCalculator(amountToSend))
+          prepareData.message.gazFees = helpers.toPrice8(await helpers.gazFeeCalculator(amountToSend))
           console.log("🌱 - file: router.js:159 - executeSwitch - prepareData.message.gazFees:", prepareData.message.gazFees)
           return prepareData
           break;
