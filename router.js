@@ -106,6 +106,7 @@ app.post("/addToPool", async (req, res) => {
     return;
   }
   switch (req.body.message.type) {
+
     case "sendToken":
 
       let isExistInPool = await pool.get(walletId)
@@ -116,6 +117,17 @@ app.post("/addToPool", async (req, res) => {
       let amountToSend = req.body.message.value
       let wallet = await wallets.get(walletId)
       let amountToSendPlusGazFee = await helpers.amountToSendPlusGazFeeCalculator(amountToSend)
+      let gazFees = await helpers.gazFeeCalculator(amountToSend)
+      if(amountToSendPlusGazFee != req.body.message.amountToSendPlusGazFee){
+        res.json("Error, Recalculate the gas fees")
+        return;
+      }
+      if(gazFees != req.body.message.gazFees){
+        res.json("Error, Recalculate the gas fees")
+        return;
+      }
+
+      console.log("🌱 - file: router.js:109 - app.post - req.body.message:", req.body.message)
       if (wallet && wallet.tokens[req.body.message.tokenName]) {
         if (wallet.tokens[req.body.message.tokenName].value >= amountToSendPlusGazFee) {
           // Ajouter la transaction à pool de transaction

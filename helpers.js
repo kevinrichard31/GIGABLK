@@ -77,13 +77,13 @@ function ipSizeAcceptable(val){
 async function amountToSendPlusGazFeeCalculator(amountToSend){
   let gazFeePercent = await infos.get("gazFee");
   let amountToSendPlusGazFee = amountToSend + (amountToSend*gazFeePercent/100);
-  return amountToSendPlusGazFee;
+  return toPrice8(amountToSendPlusGazFee);
 }
 
 async function gazFeeCalculator(amountToSend){
   let gazFeePercent = await infos.get("gazFee");
   let gazFee = (amountToSend*gazFeePercent/100);
-  return gazFee;
+  return toPrice8(gazFee);
 }
 
 function makeid(length) {
@@ -264,9 +264,10 @@ async function validateObject(obj) {
     return false;
   }
 
+
+  // Vérifier que les gazfees soient supérieur au minimumGazFee
   let minimumGazFee = await infos.get('minimumGazFee')
   if(obj.message.gazFees < minimumGazFee){
-    console.log('qdsf')
     return false;
   }
 
