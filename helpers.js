@@ -221,7 +221,7 @@ setInterval(() => {
 // Constructor function for blocks
 
 
-async function validateObject(obj) {
+async function validateObjectSendToken(obj) {
 
   // Vérifier que l'objet a les propriétés message et info
   if (!obj.message || !obj.info) {
@@ -281,6 +281,44 @@ async function validateObject(obj) {
   return true;
 }
 
+async function validateObjectGenerateToken(obj){
+  // Vérifier que le timestamp est inférieur à 15 secondes par rapport à la date actuelle
+  const now = new Date().getTime();
+  if (now - obj.message.timestamp > 15000) {
+    return false;
+  }
+
+  // Vérifier que value n'est pas négatif
+  if (obj.message.value < 1) {
+    return false;
+  }
+  
+  // Vérifier que les gazfees soient supérieur au minimumGazFee
+  let generateTokenFee = await infos.get('generateTokenFee')
+  if(obj.message.gazFees < generateTokenFee){
+    return false;
+  }
+
+  // Vérifier qu'il n'y a pas d'autres champs dans l'objet
+  const allowedKeys = ['message', 'info'];
+  const keys = Object.keys(obj);
+  if (keys.length !== allowedKeys.length || !keys.every(key => allowedKeys.includes(key))) {
+    return false;
+  }
+
+  // Vérifier que la signature est une chaîne de moins de 250 caractères
+  if (typeof obj.info.signature !== 'string' || obj.info.signature.length > 250) {
+    return false;
+  }
+
+  // Vérifier que value et gazFees sont des nombres
+  if (typeof obj.message.value !== 'number' || typeof obj.message.gazFees !== 'number') {
+    return false;
+  }
+
+  return true;
+}
+
 
 
 
@@ -299,6 +337,7 @@ module.exports = {
   gazFeeCalculator,
   controlNameGenerateToken,
   isBetweenOneMillionAndOneBillion,
-  validateObject,
+  validateObjectSendToken,
+  validateObjectGenerateToken,
   isRandomIdAlreadyExist
 };

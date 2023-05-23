@@ -93,7 +93,8 @@ app.get("/helpers/nodeInformations", async (req, res) => {
     walletsIndex: await wallets.get("walletsIndex") ?? null,
     nodeVersion: await infos.get("nodeVersion") ?? null,
     gazFee: await infos.get("gazFee") ?? null,
-    minimumGazFee: await infos.get("minimumGazFee") ?? null
+    minimumGazFee: await infos.get("minimumGazFee") ?? null,
+    generateTokenFee: await infos.get("generateTokenFee") ?? null
   }
   res.json(informations);
 });
@@ -291,7 +292,6 @@ app.get("/syncMyOwnWallets", async (req, res) => {
 });
 
 app.get("/getPeerList", async (req, res) => {
-  console.log('tet')
   res.json(['localhost:3000'])
 });
 
