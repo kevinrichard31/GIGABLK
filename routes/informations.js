@@ -198,26 +198,39 @@ app.get("/syncMyOwnWallets", async (req, res) => {
 
         switch (transaction.message.type) {
           case "generateToken":
-            let newWalletCreator = await wallets.get(transaction.message.walletId)
-            await tokens.put(transaction.message.tokenName, transaction.message.walletId)
-            console.log("🌱 - file: helpers.js:179 - app.get - newWalletCreator:", newWalletCreator)
-            if (newWalletCreator == undefined) {
-              await wallets.put(transaction.message.walletId,
-                {
-                  tokens: {
-                    [transaction.message.tokenName]: {
-                      value: transaction.message.value,
-                      feesPaid: 0
-                    }
-                  },
-                  creationDate: Date.now(),
-                  lastTransaction: {
-                    block: null,
-                    id: null
-                  }
-                }
-              );
+            let walletIdCreator = helpers.verifySignature(transaction.message, transaction.info.signature)
+            await tokens.put(transaction.message.tokenName, walletIdCreator)
+            console.log("🌱 - file: helpers.js:179 - app.get - walletIdCreator:", walletIdCreator)
+            // if (newWalletCreator == undefined) {
+            //   await wallets.put(newWalletCreator,
+            //     {
+            //       tokens: {
+            //         [transaction.message.tokenName]: {
+            //           value: transaction.message.value,
+            //           feesPaid: 0
+            //         }
+            //       },
+            //       creationDate: Date.now(),
+            //       lastTransaction: {
+            //         block: null,
+            //         id: null
+            //       }
+            //     }
+            //   );
+            // }
+            // ** AJOUT DE FONCTIONS
+            // verifier si LE WALLET A LES FONDS
+            // UTILISER LES FONDS GIGATREE POUR CREER LE TOKEEN
+            let walletCreator = await wallets.get(walletIdCreator)
+            console.log("🌱 - file: informations.js:222 - app.get - walletCreator:", walletCreator)
+            let newWalletCreator = walletCreator
+            newWalletCreator.tokens[transaction.message.tokenName] = {
+              value: transaction.message.value,
+              feesPaid: 0
             }
+            console.log("🌱 - file: informations.js:227 - app.get - newWalletCreator:", newWalletCreator)
+
+            
             break;
           case "sendToken":
             let walletIdSender = helpers.verifySignature(transaction.message, transaction.info.signature)

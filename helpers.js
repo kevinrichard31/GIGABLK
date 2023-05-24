@@ -289,7 +289,7 @@ async function validateObjectGenerateToken(obj){
   }
 
   // Vérifier que value n'est pas négatif
-  if (obj.message.value < 1) {
+  if (obj.message.value < 1 || obj.message.value > 100000000) {
     return false;
   }
   

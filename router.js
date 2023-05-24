@@ -95,6 +95,7 @@ app.post("/addToPool", async (req, res) => {
   console.log("🌱 - file: router.js:95 - app.post - req.body:", req.body)
   
   let walletId = helpers.verifySignature(req.body.message, req.body.info.signature) 
+  console.log("🌱 - file: router.js:98 - app.post - walletId:", walletId)
 
   let isRandomIdAlreadyExist = await helpers.isRandomIdAlreadyExist(walletId, req.body.message.randomId)
   if(isRandomIdAlreadyExist == true){ // SECURITY, blocks the sending of same transaction
@@ -151,6 +152,15 @@ app.post("/addToPool", async (req, res) => {
       if(isTokenExist != undefined){
         return false;
       }
+      let gazFeeTokenGenerate = await infos.get("generateTokenFee")
+      
+      if(gazFeeTokenGenerate != req.body.message.gazFees){
+        return false;
+      }
+      console.log("🌱 - file: router.js:161 - app.post - walletId:", walletId)
+
+      await pool.put(walletId, req.body)
+      res.json("Transaction added to pool, imminent validation... check on explorer")
     default:
       break;
   }
