@@ -31,7 +31,7 @@ const port = 3000;
 
 // ************ INITIALISATION FIRST NODE ********** //
 infos.put("gazFee", 0.25) // PERCENT
-infos.put("minimumGazFee", 0.5) // MINIMUM GAZ FEE FIXED
+infos.put("minimumGazFee", 0.005) // MINIMUM GAZ FEE FIXED
 infos.put("nodeVersion", 1)
 infos.put("gazFeeSubToken", 1) // AMOUNT FIXED
 infos.put("generateTokenFee", 10) // AMOUNT FIXED
@@ -119,6 +119,7 @@ app.post("/addToPool", async (req, res) => {
       let amountToSend = req.body.message.value
       let wallet = await wallets.get(walletId)
       let amountToSendPlusGazFee = await helpers.amountToSendPlusGazFeeCalculator(amountToSend)
+      console.log("🌱 - file: router.js:122 - app.post - amountToSendPlusGazFee:", amountToSendPlusGazFee)
       let gazFees = await helpers.gazFeeCalculator(amountToSend)
       if(amountToSendPlusGazFee != req.body.message.amountToSendPlusGazFee){
         res.json("Error, Recalculate the gas fees")
