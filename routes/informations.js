@@ -233,7 +233,7 @@ app.get("/syncMyOwnWallets", async (req, res) => {
                     }
                   },
                   creationDate: Date.now(),
-                  lastTransaction: {
+                  lastTransactionSent: {
                     block: null,
                     id: null
                   }
@@ -241,8 +241,8 @@ app.get("/syncMyOwnWallets", async (req, res) => {
               );
               walletSender.tokens[transaction.message.tokenName].value = helpers.toPrice8(walletSender.tokens[transaction.message.tokenName].value - transaction.message.amountToSendPlusGazFee)
               walletSender.tokens[transaction.message.tokenName].feesPaid = helpers.toPrice8(walletSender.tokens[transaction.message.tokenName].feesPaid + transaction.message.gazFees)
-              walletSender.lastTransaction.block = i
-              walletSender.lastTransaction.id = transaction.message.randomId
+              walletSender.lastTransactionSent.block = i
+              walletSender.lastTransactionSent.id = transaction.message.randomId
               await wallets.put(walletIdSender, walletSender)
               // REDIRECT FEES TO CREATOR
               let walletIdTokenCreator = await tokens.get(transaction.message.tokenName)
@@ -258,8 +258,8 @@ app.get("/syncMyOwnWallets", async (req, res) => {
               walletSender.tokens[transaction.message.tokenName].value = helpers.toPrice8(walletSender.tokens[transaction.message.tokenName].value - transaction.message.amountToSendPlusGazFee)
 
               walletSender.tokens[transaction.message.tokenName].feesPaid = helpers.toPrice8(walletSender.tokens[transaction.message.tokenName].feesPaid + transaction.message.gazFees)
-              walletSender.lastTransaction.block = i
-              walletSender.lastTransaction.id = transaction.message.randomId
+              walletSender.lastTransactionSent.block = i
+              walletSender.lastTransactionSent.id = transaction.message.randomId
               await wallets.put(walletIdSender, walletSender)
               await wallets.put(walletIdReceiver, walletReceiver)
               // REDIRECT FEES TO CREATOR
