@@ -149,16 +149,26 @@ app.post("/addToPool", async (req, res) => {
         res.json("Already a transaction in progress for this wallet, wait for next block")
         return;
       }
+
       let isTokenExist = await tokens.get(req.body.message.tokenName)
       if(isTokenExist != undefined){
         return false;
       }
-      let gazFeeTokenGenerate = await infos.get("generateTokenFee")
-      
-      if(gazFeeTokenGenerate != req.body.message.gazFees){
+
+      let generateTokenFee = await infos.get("generateTokenFee")
+      if(generateTokenFee != req.body.message.gazFees){
         return false;
       }
-      console.log("🌱 - file: router.js:161 - app.post - walletId:", walletId)
+
+      try {
+        let walletCreator =  await wallets.get(walletId)
+        if(walletCreator.tokens.GIGATREE.value < generateTokenFee){
+          return false;
+        }
+      } catch (error) {
+        return false;
+      }
+      
 
       await pool.put(walletId, req.body)
       res.json("Transaction added to pool, imminent validation... check on explorer")
