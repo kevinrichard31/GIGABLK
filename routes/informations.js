@@ -204,23 +204,17 @@ app.get("/syncMyOwnWallets", async (req, res) => {
             console.log("🌱 - file: informations.js:203 - app.get - walletCreator:", walletCreator)
             if(typeof walletCreator !== "undefined"){
               if(walletCreator.tokens.GIGATREE.value >= generateTokenFee){
+                let newWalletCreator = walletCreator
+                newWalletCreator.tokens[transaction.message.tokenName] = {
+                  value: transaction.message.value,
+                  feesPaid: 0
+                }
+                newWalletCreator.tokens.GIGATREE.value -= generateTokenFee
+                newWalletCreator.tokens.GIGATREE.feesPaid += generateTokenFee
+                await tokens.put(transaction.message.tokenName, walletIdCreator)
+                await wallets.put(walletIdCreator, newWalletCreator)
               }
             }
-
-
-            // await tokens.put(transaction.message.tokenName, walletIdCreator)
-
-            // ** AJOUT DE FONCTIONS
-            // verifier si LE WALLET A LES FONDS
-            // UTILISER LES FONDS GIGATREE POUR CREER LE TOKEEN
-            
-            let newWalletCreator = walletCreator
-            newWalletCreator.tokens[transaction.message.tokenName] = {
-              value: transaction.message.value,
-              feesPaid: 0
-            }
-            console.log("🌱 - file: informations.js:227 - app.get - newWalletCreator:", newWalletCreator)
-
             
             break;
           case "sendToken":
