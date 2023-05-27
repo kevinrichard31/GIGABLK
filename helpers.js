@@ -165,7 +165,7 @@ function isBetweenOneMillionAndOneBillion(value) {
 
 async function isRandomIdAlreadyExist(walletSenderId, randomIdFromTransaction){
   let wallet = await wallets.get(walletSenderId)
-  let lastTransactionId = wallet.lastTransaction.id
+  let lastTransactionId = wallet.lastTransactionSent.id
   if(lastTransactionId == randomIdFromTransaction){
     console.log('test')
     return true;

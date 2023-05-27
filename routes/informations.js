@@ -60,7 +60,7 @@ app.get("/helpers/genesisBlock", async (req, res) => {
       blockMessage: {
         index: 0,
         timestamp: Date.now(),
-        transactions: [{ message : {type: "generateToken", tokenName: "GIGATREE", value: 25000000, walletId: "cZ4TJ4frv8hdT6a4et4n4oYoePgmABWhj7YTh2wJ926Z", createdOn: Date.now()} }]
+        transactions: [{ message : {type: "genesisBlock", tokenName: "GIGATREE", value: 25000000, walletId: "cZ4TJ4frv8hdT6a4et4n4oYoePgmABWhj7YTh2wJ926Z", createdOn: Date.now()}, info: {} }]
       },
       blockInfo: {
         signatureBlock: null,
@@ -69,7 +69,15 @@ app.get("/helpers/genesisBlock", async (req, res) => {
     };
   
     genesisBlock.blockInfo.signatureBlock = helpers.signMessage(genesisBlock.blockMessage);
+    genesisBlock.blockMessage.transactions[0].info.signature = helpers.signMessage(genesisBlock.blockMessage.transactions[0].message);
+    console.log("🌱 - file: informations.js:73 - app.get - genesisBlock:", genesisBlock.blockMessage.transactions[0])
   
+    let walletCreator = helpers.verifySignature(genesisBlock.blockMessage.transactions[0].message, genesisBlock.blockMessage.transactions[0].info.signature)
+    console.log("🌱 - file: informations.js:76 - app.get - genesisBlock.blockMessage.transactions[0].info.signature:", genesisBlock.blockMessage.transactions[0].info.signature)
+    console.log("🌱 - file: informations.js:76 - app.get - genesisBlock.blockMessage.transactions[0].message:", genesisBlock.blockMessage.transactions[0].message)
+    console.log("🌱 - file: informations.js:76 - app.get - walletCreator:", walletCreator)
+
+
     await blocks.put(0, genesisBlock);
     await blocks.put("blocksIndex", 0);
     let x = await blocks.get(0);
@@ -191,15 +199,41 @@ app.get("/syncMyOwnWallets", async (req, res) => {
     console.log("🌱 - file: informations.js:184 - app.get - block:", block.blockMessage.transactions)
     if (block != undefined) { // BLOCKS NON VIDE DONC...
       let transactions = block.blockMessage.transactions
+      console.log("🌱 - file: informations.js:194 - app.get - transactions:", transactions)
 
       for (let j = 0; j < transactions.length; j++) { // DEUXIEME BOUCLE SYNCHRONISATION DE CHAQUES TRANSACTIONS
         let transaction = transactions[j]
         console.log("🌱 - file: informations.js:189 - app.get - transaction:", transaction)
 
         switch (transaction.message.type) {
-          case "generateToken":
+
+          case "genesisBlock":
+            let genesisWalletIdCreator = helpers.verifySignature(transaction.message, transaction.info.signature)
+            await wallets.put(genesisWalletIdCreator,
+              {
+                tokens: {
+                  [transaction.message.tokenName]: {
+                    value: transaction.message.value,
+                    feesPaid: 0
+                  }
+                },
+                creationDate: Date.now(),
+                lastTransactionSent: {
+                  block: null,
+                  id: null
+                }
+              }
+            );
+            await tokens.put(transaction.message.tokenName, genesisWalletIdCreator)
+            break;
+            case "generateToken":
             let generateTokenFee = await infos.get("generateTokenFee");
+            console.log("🌱 - file: informations.js:203 - app.get - transaction:", transaction)
+
             let walletIdCreator = helpers.verifySignature(transaction.message, transaction.info.signature)
+            console.log("🌱 - file: informations.js:214 - app.get - walletIdCreator:", walletIdCreator)
+            console.log("🌱 - file: informations.js:212 - app.get - transaction.info.signature:", transaction.info.signature)
+            console.log("🌱 - file: informations.js:212 - app.get - transaction.message:", transaction.message)
             let walletCreator = await wallets.get(walletIdCreator)
             console.log("🌱 - file: informations.js:203 - app.get - walletCreator:", walletCreator)
             if(typeof walletCreator !== "undefined"){

@@ -179,76 +179,76 @@ app.post("/addToPool", async (req, res) => {
 
 // SENDTRANSACTION TO NODE - PASS PARAM $VALUE
 // GENERATE TOKEN , CAN'T CREATE TOKEN IF YOU ALREADY HAVE TOKENS IN YOUR WALLETS
-// app.get("/sendTransaction", async (req, res) => { // childs => /addToPool > 
-//   try {
-//     if (!req.query.type) {
-//       return res.status(400).json("Value is missing");
-//     }
+app.get("/sendTransaction", async (req, res) => { // childs => /addToPool > 
+  try {
+    if (!req.query.type) {
+      return res.status(400).json("Value is missing");
+    }
 
-//     let prepareData = {
-//       message: {
-//         timestamp: Date.now()
-//       },
-//       info: {
-//         signature: null,
-//         howToVerifyInfo: "To verify message, you need to use helpers.js tool verifySignature() use message as message and info.signature as signature to verify authenticity"
-//       }
-//     };
+    let prepareData = {
+      message: {
+        timestamp: Date.now()
+      },
+      info: {
+        signature: null,
+        howToVerifyInfo: "To verify message, you need to use helpers.js tool verifySignature() use message as message and info.signature as signature to verify authenticity"
+      }
+    };
 
-//     async function executeSwitch() {
-//       switch (req.query.type) {
-//         case "sendToken":
-//           let amountToSend = Math.abs(parseFloat(req.query.value))
-//           console.log("🌱 - file: router.js:145 - executeSwitch - amountToSend:", amountToSend)
+    async function executeSwitch() {
+      switch (req.query.type) {
+        case "sendToken":
+          let amountToSend = Math.abs(parseFloat(req.query.value))
+          console.log("🌱 - file: router.js:145 - executeSwitch - amountToSend:", amountToSend)
 
-//           if (isNaN(amountToSend)) {
-//             return false
-//           }
-//           if (req.query.toPublicKey == undefined || req.query.tokenName == undefined) {
-//             return false
-//           }
-//           prepareData.message.type = req.query.type
-//           prepareData.message.value = amountToSend
-//           prepareData.message.toPublicKey = req.query.toPublicKey
-//           prepareData.message.tokenName = req.query.tokenName
-//           prepareData.message.randomId = helpers.makeid(10)
-//           prepareData.message.amountToSendPlusGazFee = helpers.toPrice8(await helpers.amountToSendPlusGazFeeCalculator(amountToSend))
-//           prepareData.message.gazFees = helpers.toPrice8(await helpers.gazFeeCalculator(amountToSend))
-//           console.log("🌱 - file: router.js:159 - executeSwitch - prepareData.message.gazFees:", prepareData.message.gazFees)
-//           return prepareData
-//           break;
-//         case "generateToken":
-//           console.log('test')
-//           console.log(req.query)
-//           break;
-//         default:
+          if (isNaN(amountToSend)) {
+            return false
+          }
+          if (req.query.toPublicKey == undefined || req.query.tokenName == undefined) {
+            return false
+          }
+          prepareData.message.type = req.query.type
+          prepareData.message.value = amountToSend
+          prepareData.message.toPublicKey = req.query.toPublicKey
+          prepareData.message.tokenName = req.query.tokenName
+          prepareData.message.randomId = helpers.makeid(10)
+          prepareData.message.amountToSendPlusGazFee = helpers.toPrice8(await helpers.amountToSendPlusGazFeeCalculator(amountToSend))
+          prepareData.message.gazFees = helpers.toPrice8(await helpers.gazFeeCalculator(amountToSend))
+          console.log("🌱 - file: router.js:159 - executeSwitch - prepareData.message.gazFees:", prepareData.message.gazFees)
+          return prepareData
+          break;
+        case "generateToken":
+          console.log('test')
+          console.log(req.query)
+          break;
+        default:
 
-//           break;
-//       }
-//     }
-//     executeSwitch().then(async (data) => {
-//       if (data == false || data == undefined) {
-//         res.json('Verify your parameters')
-//         return
-//       }
-//       prepareData.info.signature = helpers.signMessage(prepareData.message);
-//       console.log("🌱 - file: router.js:177 - executeSwitch - prepareData:", prepareData)
-//       if (await helpers.validateObjectSendToken(prepareData) == false) {
-//         res.json('error')
-//         return false;
-//       }
-//       axios.post(localurl + "addToPool", prepareData)
-//         .then(function (response) {
-//           res.json(response.data)
-//         })
-//         .catch(function (error) {
-//           res.json(error)
-//         })
-//     })
-//   } catch (error) {
-//     res.json("Erreur lors de la transaction")
-//   }
-// });
+          break;
+      }
+    }
+    executeSwitch().then(async (data) => {
+      if (data == false || data == undefined) {
+        res.json('Verify your parameters')
+        return
+      }
+      prepareData.info.signature = helpers.signMessage(prepareData.message);
+      console.log("🌱 - file: router.js:177 - executeSwitch - prepareData:", prepareData)
+      if (await helpers.validateObjectSendToken(prepareData) == false) {
+        res.json('error')
+        return false;
+      }
+      axios.post(localurl + "addToPool", prepareData)
+        .then(function (response) {
+          res.json(response.data)
+        })
+        .catch(function (error) {
+          res.json(error)
+        })
+    })
+  } catch (error) {
+    res.json("Erreur lors de la transaction")
+  }
+});
 app.post("/sendTransaction", async (req, res) => { // childs => /addToPool > 
   try {
 
