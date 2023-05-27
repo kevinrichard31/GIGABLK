@@ -288,6 +288,14 @@ app.get("/syncMyOwnWallets", async (req, res) => {
               await wallets.put(walletIdTokenCreator, walletCreator)
               
             } else if(walletIdReceiver != undefined){
+              if (typeof walletReceiver.tokens[transaction.message.tokenName] === 'undefined') { // INIT TOKEN IN WALLET IF NOT EXIST
+                walletReceiver.tokens[transaction.message.tokenName] = {
+                  value: 0,
+                  feesPaid: 0
+                };
+              }
+              console.log("🌱 - file: informations.js:292 - app.get - walletReceiver:", walletReceiver.tokens[transaction.message.tokenName].value)
+              
               walletReceiver.tokens[transaction.message.tokenName].value = helpers.toPrice8(walletReceiver.tokens[transaction.message.tokenName].value + transaction.message.value)
               
               walletSender.tokens[transaction.message.tokenName].value = helpers.toPrice8(walletSender.tokens[transaction.message.tokenName].value - transaction.message.amountToSendPlusGazFee)
