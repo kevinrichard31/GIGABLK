@@ -87,6 +87,8 @@ async function amountToSendPlusGazFeeCalculator(amountToSend){
 }
 
 async function gazFeeCalculator(amountToSend){
+  // let tokenInfos = await tokens.get(req.body.message.tokenName)
+
   let minimumGazFee = await infos.get("minimumGazFee")
   let gazFeePercent = await infos.get("gazFee");
   let gazFee = (amountToSend*gazFeePercent/100);

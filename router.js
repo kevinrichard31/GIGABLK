@@ -130,6 +130,10 @@ app.post("/addToPool", async (req, res) => {
         return;
       }
 
+
+      
+      
+
       console.log("🌱 - file: router.js:109 - app.post - req.body.message:", req.body.message)
       if (wallet && wallet.tokens[req.body.message.tokenName]) {
         if (wallet.tokens[req.body.message.tokenName].value >= amountToSendPlusGazFee) {
