@@ -118,9 +118,9 @@ app.post("/addToPool", async (req, res) => {
       }
       let amountToSend = req.body.message.value
       let wallet = await wallets.get(walletId)
-      let amountToSendPlusGazFee = await helpers.amountToSendPlusGazFeeCalculator(amountToSend)
+      let amountToSendPlusGazFee = await helpers.amountToSendPlusGazFeeCalculator(amountToSend, req.body.message.tokenName)
       console.log("🌱 - file: router.js:122 - app.post - amountToSendPlusGazFee:", amountToSendPlusGazFee)
-      let gazFees = await helpers.gazFeeCalculator(amountToSend)
+      let gazFees = await helpers.gazFeeCalculator(amountToSend, req.body.message.tokenName)
       if(amountToSendPlusGazFee != req.body.message.amountToSendPlusGazFee){
         res.json("Error, Recalculate the gas fees")
         return;
@@ -216,8 +216,8 @@ app.get("/sendTransaction", async (req, res) => { // childs => /addToPool >
           prepareData.message.toPublicKey = req.query.toPublicKey
           prepareData.message.tokenName = req.query.tokenName
           prepareData.message.randomId = helpers.makeid(10)
-          prepareData.message.amountToSendPlusGazFee = helpers.toPrice8(await helpers.amountToSendPlusGazFeeCalculator(amountToSend))
-          prepareData.message.gazFees = helpers.toPrice8(await helpers.gazFeeCalculator(amountToSend))
+          prepareData.message.amountToSendPlusGazFee = helpers.toPrice8(await helpers.amountToSendPlusGazFeeCalculator(amountToSend, req.body.message.tokenName))
+          prepareData.message.gazFees = helpers.toPrice8(await helpers.gazFeeCalculator(amountToSend, req.body.message.tokenName))
           console.log("🌱 - file: router.js:159 - executeSwitch - prepareData.message.gazFees:", prepareData.message.gazFees)
           return prepareData
           break;
