@@ -6,7 +6,7 @@ const fs = require("fs");
 const axios = require("axios");
 const localurl = "http://localhost:3000/";
 // LMDB
-const { blocks, wallets, infos, nodesList, pool } = require('./lmdbSetup.js');
+const { blocks, wallets, infos, nodesList, pool, tokens } = require('./lmdbSetup.js');
 
 function toPrice2(params) {
   return parseFloat(parseFloat(params).toFixed(2));
@@ -74,27 +74,35 @@ function ipSizeAcceptable(val){
   }
 }
 
-async function amountToSendPlusGazFeeCalculator(amountToSend){
+async function amountToSendPlusGazFeeCalculator(amountToSend, tokenName){
+  let tokenInfos = await tokens.get(tokenName)
   let minimumGazFee = await infos.get("minimumGazFee")
   let gazFeePercent = await infos.get("gazFee");
   let gazFee = (amountToSend*gazFeePercent/100);
   if(gazFee < minimumGazFee){
     gazFee = minimumGazFee
+  }
+  if(tokenInfos.volume < tokenInfos.maxSupply){ // RETURN MINIMUM GAZFEE FOR FIRST 24 000 000 VOLUME
+    gazFee = minimumGazFee;
   }
   let amountToSendPlusGazFee = amountToSend + gazFee;
 
   return toPrice8(amountToSendPlusGazFee);
 }
 
-async function gazFeeCalculator(amountToSend){
-  // let tokenInfos = await tokens.get(req.body.message.tokenName)
-
+async function gazFeeCalculator(amountToSend, tokenName){
+  let tokenInfos = await tokens.get(tokenName)
+  
   let minimumGazFee = await infos.get("minimumGazFee")
   let gazFeePercent = await infos.get("gazFee");
   let gazFee = (amountToSend*gazFeePercent/100);
+  if(tokenInfos.volume < tokenInfos.maxSupply){ // RETURN MINIMUM GAZFEE FOR FIRST 24 000 000 VOLUME
+    return toPrice8(minimumGazFee);
+  }
   if(gazFee < minimumGazFee){
     gazFee = minimumGazFee
   }
+
   return toPrice8(gazFee);
 }
 
