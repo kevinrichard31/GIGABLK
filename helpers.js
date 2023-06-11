@@ -75,6 +75,8 @@ function ipSizeAcceptable(val){
 }
 
 async function amountToSendPlusGazFeeCalculator(amountToSend, tokenName){
+  console.log("🌱 - file: helpers.js:78 - amountToSendPlusGazFeeCalculator - tokenName:", tokenName)
+  console.log("🌱 - file: helpers.js:78 - amountToSendPlusGazFeeCalculator - amountToSend:", amountToSend)
   let tokenInfos = await tokens.get(tokenName)
   let minimumGazFee = await infos.get("minimumGazFee")
   let gazFeePercent = await infos.get("gazFee");
@@ -86,7 +88,7 @@ async function amountToSendPlusGazFeeCalculator(amountToSend, tokenName){
     gazFee = minimumGazFee;
   }
   let amountToSendPlusGazFee = amountToSend + gazFee;
-
+  
   return toPrice8(amountToSendPlusGazFee);
 }
 

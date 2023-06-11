@@ -130,7 +130,7 @@ app.post("/addToPool", async (req, res) => {
         return;
       }
 
-
+      
       
       
 
@@ -215,9 +215,10 @@ app.get("/sendTransaction", async (req, res) => { // childs => /addToPool >
           prepareData.message.value = amountToSend
           prepareData.message.toPublicKey = req.query.toPublicKey
           prepareData.message.tokenName = req.query.tokenName
+          console.log("🌱 - file: router.js:218 - executeSwitch - prepareData.message.tokenName:", prepareData.message.tokenName)
           prepareData.message.randomId = helpers.makeid(10)
-          prepareData.message.amountToSendPlusGazFee = helpers.toPrice8(await helpers.amountToSendPlusGazFeeCalculator(amountToSend, req.body.message.tokenName))
-          prepareData.message.gazFees = helpers.toPrice8(await helpers.gazFeeCalculator(amountToSend, req.body.message.tokenName))
+          prepareData.message.amountToSendPlusGazFee = helpers.toPrice8(await helpers.amountToSendPlusGazFeeCalculator(amountToSend, req.query.tokenName))
+          prepareData.message.gazFees = helpers.toPrice8(await helpers.gazFeeCalculator(amountToSend, req.query.tokenName))
           console.log("🌱 - file: router.js:159 - executeSwitch - prepareData.message.gazFees:", prepareData.message.gazFees)
           return prepareData
           break;

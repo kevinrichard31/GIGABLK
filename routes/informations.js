@@ -94,6 +94,18 @@ app.get("/helpers/checkMyWallet", async (req, res) => {
   res.json(wallet);
 });
 
+app.get("/helpers/gazFeeCalculator", async (req, res) => {
+  try {
+    let value = JSON.parse(req.query.value)
+    let tokenName = req.query.tokenName
+    let gazFee = await helpers.gazFeeCalculator(value, tokenName)
+    res.json(gazFee);
+  } catch (error) {
+    res.json("Error in request");
+  }
+
+});
+
 app.get("/helpers/tokensList", async (req, res) => {
   let arr = []
   for (let { key, value } of tokens.getRange()) {
