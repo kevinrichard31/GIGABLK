@@ -12,8 +12,12 @@ function toPrice2(params) {
   return parseFloat(parseFloat(params).toFixed(2));
 }
 
-function toPrice8(params) {
-  return parseFloat(parseFloat(params).toFixed(8));
+function toPrice8(num) {
+  if (typeof num !== 'number') {
+    throw new Error('Le paramètre doit être un nombre.');
+  }
+
+  return parseFloat(num.toFixed(8));
 }
 
 function splitString(stringToSplit, separator) {
