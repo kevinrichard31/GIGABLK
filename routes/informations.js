@@ -264,6 +264,13 @@ app.get("/syncMyOwnWallets", async (req, res) => {
                 newWalletCreator.tokens.GIGATREE.feesPaid = newWalletCreator.tokens.GIGATREE.feesPaid.plus(generateTokenFee).toNumber()
                 await tokens.put(transaction.message.tokenName, {wallet: walletIdCreator, volume: 0, maxSupply: transaction.message.value})
                 await wallets.put(walletIdCreator, newWalletCreator)
+                
+                let gigatreeWalletId = await tokens.get("GIGATREE")
+                let walletGigatree = await wallets.get(gigatreeWalletId.wallet)
+                walletGigatree.tokens.GIGATREE.value = new Big(walletGigatree.tokens.GIGATREE.value)
+                walletGigatree.tokens.GIGATREE.value = walletGigatree.tokens.GIGATREE.value.plus(generateTokenFee).toNumber()
+                await wallets.put(gigatreeWalletId.wallet, walletGigatree)
+                
               }
             }
             
@@ -319,13 +326,13 @@ app.get("/syncMyOwnWallets", async (req, res) => {
               walletReceiver.tokens[transaction.message.tokenName].value = walletReceiver.tokens[transaction.message.tokenName].value.plus(transaction.message.value).toNumber()
               await wallets.put(walletIdReceiver, walletReceiver)
             }
-
-            let walletCreatorX = await wallets.get(tokenCreator.wallet)
-            walletCreatorX.tokens[transaction.message.tokenName].value = new Big(walletCreatorX.tokens[transaction.message.tokenName].value)
-            walletCreatorX.tokens[transaction.message.tokenName].value = walletCreatorX.tokens[transaction.message.tokenName].value.plus(transaction.message.gazFees).toNumber()
-            await wallets.put(tokenCreator.wallet, walletCreatorX)
-
             
+            // REDIRECT FEES TO CREATOR
+            let gigatreeWalletId = await tokens.get("GIGATREE")
+            let walletGigatree = await wallets.get(gigatreeWalletId.wallet)
+            walletGigatree.tokens.GIGATREE.value = new Big(walletGigatree.tokens.GIGATREE.value)
+            walletGigatree.tokens.GIGATREE.value = walletGigatree.tokens.GIGATREE.value.plus(transaction.message.gazFees).toNumber()
+            await wallets.put(gigatreeWalletId.wallet, walletGigatree)
             
             break;
           default:

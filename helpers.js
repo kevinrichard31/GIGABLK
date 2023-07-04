@@ -78,25 +78,24 @@ function ipSizeAcceptable(val){
   }
 }
 
-async function amountToSendPlusGazFeeCalculator(amountToSend, tokenName){
-  console.log("🌱 - file: helpers.js:78 - amountToSendPlusGazFeeCalculator - tokenName:", tokenName)
-  console.log("🌱 - file: helpers.js:78 - amountToSendPlusGazFeeCalculator - amountToSend:", amountToSend)
+async function gazFeeCalculator(amountToSend, tokenName){
   let tokenInfos = await tokens.get(tokenName)
+  
   let minimumGazFee = await infos.get("minimumGazFee")
   let gazFeePercent = await infos.get("gazFee");
   let gazFee = (amountToSend*gazFeePercent/100);
+  if(tokenInfos.volume < tokenInfos.maxSupply){ // RETURN MINIMUM GAZFEE FOR FIRST 24 000 000 VOLUME
+    return toPrice8(minimumGazFee);
+  }
   if(gazFee < minimumGazFee){
     gazFee = minimumGazFee
   }
-  if(tokenInfos.volume < tokenInfos.maxSupply){ // RETURN MINIMUM GAZFEE FOR FIRST 24 000 000 VOLUME
-    gazFee = minimumGazFee;
-  }
-  let amountToSendPlusGazFee = amountToSend + gazFee;
-  
-  return toPrice8(amountToSendPlusGazFee);
+
+  return toPrice8(gazFee);
 }
 
-async function gazFeeCalculator(amountToSend, tokenName){
+
+async function gazFeeCalculatorReal(amountToSend, tokenName){
   let tokenInfos = await tokens.get(tokenName)
   
   let minimumGazFee = await infos.get("minimumGazFee")
@@ -280,11 +279,6 @@ async function validateObjectSendToken(obj) {
     return false;
   }
 
-  // Vérifier que amountToSendPlusGazFee et gazFees sont des nombres
-  if (typeof obj.message.amountToSendPlusGazFee !== 'number' || typeof obj.message.gazFees !== 'number') {
-    return false;
-  }
-
   // Vérifier que la signature est une chaîne de moins de 250 caractères
   if (typeof obj.info.signature !== 'string' || obj.info.signature.length > 250) {
     return false;
@@ -345,9 +339,6 @@ async function validateObjectGenerateToken(obj){
   return true;
 }
 
-
-
-
 module.exports = {
   toPrice2,
   toPrice8,
@@ -357,7 +348,6 @@ module.exports = {
   getMyIp,
   getPublicKey,
   ipSizeAcceptable,
-  amountToSendPlusGazFeeCalculator,
   makeid,
   blockBuilder,
   gazFeeCalculator,
